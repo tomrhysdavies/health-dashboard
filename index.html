@@ -5,10 +5,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Health Dashboard</title>
+    <style>
+        .pixel-badge { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; position: relative; border: 4px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
+        .badge-lit { border-color: #3b82f6; opacity: 1; filter: grayscale(0%); }
+        .badge-dim { border-color: #e5e7eb; opacity: 0.5; filter: grayscale(100%); }
+        .badge-count { position: absolute; bottom: -8px; right: -8px; background: #2563eb; color: white; font-size: 10px; padding: 2px 6px; font-weight: bold; border-radius: 4px; }
+    </style>
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-6">
         
+        <!-- Badge Case -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-gray-700 uppercase tracking-widest text-sm">Achievement Case</h2>
+                <button onclick="checkAchievements()" class="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-200">Check Achievements</button>
+            </div>
+            <div id="badgeCase" class="flex flex-wrap gap-4 justify-center"></div>
+        </div>
+
         <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
             <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
             <div id="stats" class="w-full md:w-1/2"></div>
@@ -20,7 +35,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Weight Trend -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <h2 class="text-lg font-bold mb-4">Weight Trend</h2>
                 <canvas id="weightChart"></canvas>
@@ -30,14 +44,12 @@
                 </div>
             </div>
 
-            <!-- Activity Calendar & Heatmap -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">&larr;</button>
                     <h2 id="monthLabel" class="font-bold text-lg"></h2>
                     <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-lg">&rarr;</button>
                 </div>
-                <!-- Weekly Streak Heatmap -->
                 <div id="streakHeatmap" class="flex gap-2 mb-6 justify-center"></div>
                 <div id="calGrid" class="grid grid-cols-7 gap-1 text-center"></div>
                 <div class="mt-6 flex gap-2">
@@ -47,7 +59,6 @@
                 </div>
             </div>
 
-            <!-- Protein Tracker -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border col-span-1 md:col-span-2">
                 <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -73,7 +84,10 @@
     </div>
 
     <script>
-        let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, proteinLogs: {}, goal: 150 };
+        let state = JSON.parse(localStorage.getItem('fitData')) || { 
+            weights: [], acts: {}, proteinLogs: {}, goal: 150, 
+            badges: { padelProdigy: 0, weeklyWarrior: 0, gravityDefier: 0, ironPillar: 0, proteinPurist: 0, macroMaster: 0 }
+        };
         let currentView = new Date();
         const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500' };
         const todayKey = new Date().toISOString().split('T')[0];
@@ -81,103 +95,69 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderWeightChart();
-            renderCalendar();
-            renderStats();
-            renderProtein();
-            renderStreakHeatmap();
+            renderWeightChart(); renderCalendar(); renderStats(); renderProtein(); renderStreakHeatmap(); renderBadges();
         }
 
-        // --- Visual: Streak Heatmap ---
+        function renderBadges() {
+            const container = document.getElementById('badgeCase');
+            const defs = [
+                { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
+                { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
+                { id: 'gravityDefier', label: 'Gravity Defier', icon: '⬇️' },
+                { id: 'ironPillar', label: 'Iron Pillar', icon: '🏛️' },
+                { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
+                { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
+            ];
+            container.innerHTML = defs.map(b => `
+                <div class="pixel-badge ${state.badges[b.id] > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
+                    <span class="text-3xl">${b.icon}</span>
+                    <span class="badge-count">${state.badges[b.id]}</span>
+                </div>
+            `).join('');
+        }
+
+        function checkAchievements() {
+            // Note: Add logic here to scan state.acts, state.weights, and state.proteinLogs
+            // Increment state.badges[key] if criteria met, then:
+            alert("Achievements checked! (Logic implementation pending)");
+            save();
+        }
+
         function renderStreakHeatmap() {
             const container = document.getElementById('streakHeatmap');
             container.innerHTML = '';
             const today = new Date();
-            const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1;
             const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - dayOfWeek);
-
+            startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
             for (let i = 0; i < 7; i++) {
-                const date = new Date(startOfWeek);
-                date.setDate(startOfWeek.getDate() + i);
+                const date = new Date(startOfWeek); date.setDate(startOfWeek.getDate() + i);
                 const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-                const isActive = !!state.acts[key];
                 const pixel = document.createElement('div');
-                pixel.className = `w-8 h-8 border-2 ${isActive ? 'bg-green-500 border-green-600' : 'bg-gray-200 border-gray-300'}`;
-                pixel.title = date.toLocaleDateString();
+                pixel.className = `w-8 h-8 border-2 ${!!state.acts[key] ? 'bg-green-500' : 'bg-gray-200'}`;
                 container.appendChild(pixel);
             }
         }
 
-        // --- Protein Logic ---
         function renderProtein() {
             const current = state.proteinLogs[todayKey] || 0;
             document.getElementById('currentProtein').innerText = current + "g";
             document.getElementById('pGoal').value = state.goal;
             document.getElementById('motivator').classList.toggle('hidden', current < parseInt(state.goal));
-            
             const pCtx = document.getElementById('proteinChart').getContext('2d');
             if (window.pChart) window.pChart.destroy();
-            window.pChart = new Chart(pCtx, { 
-                type: 'bar', 
-                data: { 
-                    labels: Object.keys(state.proteinLogs).slice(-30), 
-                    datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false } 
-            });
+            window.pChart = new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
 
-        function toggleGoalEdit() {
-            const goalInput = document.getElementById('pGoal');
-            goalInput.disabled = !goalInput.disabled;
-            if (!goalInput.disabled) goalInput.focus();
-        }
-
-        function addProtein() {
-            const input = document.getElementById('pAdd');
-            const val = parseInt(input.value);
-            if(!isNaN(val)) {
-                state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val;
-                input.value = '';
-                save();
-            }
-        }
-
-        function saveGoal() { 
-            state.goal = document.getElementById('pGoal').value; 
-            document.getElementById('pGoal').disabled = true;
-            save(); 
-        }
-
-        // --- Existing Logic ---
-        function renderStats() {
-            const today = new Date();
-            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-            const count = Object.keys(state.acts).filter(d => new Date(d) >= startOfWeek).length;
-            const progress = Math.min((count / 3) * 100, 100);
-            document.getElementById('stats').innerHTML = `<div class="flex justify-between text-xs font-bold mb-1"><span>Weekly Activity</span><span>${count} / 3 Days</span></div><div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden"><div class="bg-green-500 h-full transition-all duration-700 ease-out" style="width: ${progress}%"></div></div>`;
-        }
-
-        function renderCalendar() {
-            const grid = document.getElementById('calGrid'); grid.innerHTML = '';
-            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
-            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
-            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
-                const key = `${y}-${m}-${i}`; const activity = state.acts[key]; const color = activityColors[activity] || 'bg-gray-50';
-                const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer transition ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
-                div.innerText = i;
-                div.onclick = () => { if (activity && confirm(`Remove ${activity} log?`)) { delete state.acts[key]; save(); } }; grid.appendChild(div);
-            }
-        }
-
+        function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
+        function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
+        function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
+        function renderStats() { const count = Object.keys(state.acts).length; document.getElementById('stats').innerHTML = `<div class="text-xs font-bold mb-1">Total Activities Logged: ${count}</div>`; }
+        function renderCalendar() { const grid = document.getElementById('calGrid'); grid.innerHTML = ''; const [y, m] = [currentView.getFullYear(), currentView.getMonth()]; document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' }); for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) { const key = `${y}-${m}-${i}`; const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer ${state.acts[key] ? 'bg-blue-500 text-white' : 'bg-gray-50'}`; div.innerText = i; grid.appendChild(div); } }
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
-        
         let chart;
-        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb', tension: 0.4 }] } }); }
-        
+        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } }); }
         function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
         function importData(e) { const r = new FileReader(); r.onload = (event) => { state = JSON.parse(event.target.result); save(); }; r.readAsText(e.target.files[0]); }
         render();
