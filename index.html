@@ -108,12 +108,17 @@
         }
 
         function addProtein() {
-            const input = document.getElementById('pAdd');
-            const val = parseInt(input.value);
-            if(!isNaN(val)) {
+            const inputField = document.getElementById('pAdd');
+            const val = parseInt(inputField.value);
+            
+            console.log("Adding protein:", val); // You will see this in F12 -> Console
+
+            if(!isNaN(val) && val > 0) {
                 state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val;
-                input.value = '';
-                save();
+                inputField.value = ''; // Clear the box
+                save(); // This triggers render(), which redraws the protein total and chart
+            } else {
+                alert("Please enter a valid number of grams.");
             }
         }
 
