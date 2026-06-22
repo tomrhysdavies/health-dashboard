@@ -91,27 +91,36 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap(); renderBadges();
+            renderWeightChart();
+            renderCalendar();
+            renderProtein();
+            renderStreakHeatmap();
+            renderBadges(); // Just adding this call
         }
 
-        function renderBadges() {
-            const container = document.getElementById('badgeCase');
-            if (!container) return; 
-            const defs = [
-                { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
-                { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
-                { id: 'gravityDefier', label: 'Gravity Defier', icon: '⬇️' },
-                { id: 'ironPillar', label: 'Iron Pillar', icon: '🏛️' },
-                { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
-                { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
-            ];
-            container.innerHTML = defs.map(b => `
-                <div class="pixel-badge ${state.badges[b.id] > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
-                    <span class="text-xl">${b.icon}</span>
-                    <span class="badge-count">${state.badges[b.id]}</span>
-                </div>
-            `).join('');
-        }
+       function renderBadges() {
+    const container = document.getElementById('badgeCase');
+    if (!container) return; 
+    
+    const defs = [
+        { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
+        { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
+        { id: 'gravityDefier', label: 'Gravity Defier', icon: '⬇️' },
+        { id: 'ironPillar', label: 'Iron Pillar', icon: '🏛️' },
+        { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
+        { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
+    ];
+    
+    container.innerHTML = defs.map(b => {
+        const count = state.badges[b.id] || 0;
+        return `
+            <div class="pixel-badge ${count > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
+                <span class="text-xl">${b.icon}</span>
+                <span class="badge-count">${count}</span>
+            </div>
+        `;
+    }).join('');
+}
 
         function checkAchievements() { alert("Scanning data..."); render(); }
 
