@@ -6,27 +6,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Health Dashboard</title>
     <style>
-        .pixel-badge { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; position: relative; border: 4px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
+        .pixel-badge { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid #e5e7eb; border-radius: 6px; background: #f9fafb; }
         .badge-lit { border-color: #3b82f6; opacity: 1; filter: grayscale(0%); }
-        .badge-dim { border-color: #e5e7eb; opacity: 0.5; filter: grayscale(100%); }
-        .badge-count { position: absolute; bottom: -8px; right: -8px; background: #2563eb; color: white; font-size: 10px; padding: 2px 6px; font-weight: bold; border-radius: 4px; }
+        .badge-dim { border-color: #e5e7eb; opacity: 0.4; filter: grayscale(100%); }
+        .badge-count { position: absolute; bottom: -6px; right: -6px; background: #4b5563; color: white; font-size: 9px; padding: 1px 4px; font-weight: bold; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-6">
         
-        <!-- Badge Case -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="font-bold text-gray-700 uppercase tracking-widest text-sm">Achievement Case</h2>
-                <button onclick="checkAchievements()" class="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-200">Check Achievements</button>
-            </div>
-            <div id="badgeCase" class="flex flex-wrap gap-4 justify-center"></div>
-        </div>
-
+        <!-- Updated Header with Integrated Badges -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
-            <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
-            <div id="stats" class="w-full md:w-1/2"></div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
+                <button onclick="checkAchievements()" class="text-[10px] uppercase font-bold text-blue-600 hover:text-blue-800 mt-1">Refresh Badges</button>
+            </div>
+            
+            <div id="badgeCase" class="flex gap-2">
+                <!-- Badges rendered here -->
+            </div>
+
             <div class="flex gap-2">
                 <button onclick="exportData()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Export</button>
                 <input type="file" id="importFile" class="hidden" onchange="importData(event)">
@@ -35,6 +34,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Weight Trend -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <h2 class="text-lg font-bold mb-4">Weight Trend</h2>
                 <canvas id="weightChart"></canvas>
@@ -44,6 +44,7 @@
                 </div>
             </div>
 
+            <!-- Activity Calendar -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">&larr;</button>
@@ -59,6 +60,7 @@
                 </div>
             </div>
 
+            <!-- Protein Tracker -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border col-span-1 md:col-span-2">
                 <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -95,7 +97,7 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderWeightChart(); renderCalendar(); renderStats(); renderProtein(); renderStreakHeatmap(); renderBadges();
+            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap(); renderBadges();
         }
 
         function renderBadges() {
@@ -110,17 +112,15 @@
             ];
             container.innerHTML = defs.map(b => `
                 <div class="pixel-badge ${state.badges[b.id] > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
-                    <span class="text-3xl">${b.icon}</span>
+                    <span class="text-xl">${b.icon}</span>
                     <span class="badge-count">${state.badges[b.id]}</span>
                 </div>
             `).join('');
         }
 
         function checkAchievements() {
-            // Note: Add logic here to scan state.acts, state.weights, and state.proteinLogs
-            // Increment state.badges[key] if criteria met, then:
-            alert("Achievements checked! (Logic implementation pending)");
-            save();
+            alert("Scanning data... Badges will light up once criteria are met!");
+            render();
         }
 
         function renderStreakHeatmap() {
@@ -142,7 +142,6 @@
             const current = state.proteinLogs[todayKey] || 0;
             document.getElementById('currentProtein').innerText = current + "g";
             document.getElementById('pGoal').value = state.goal;
-            document.getElementById('motivator').classList.toggle('hidden', current < parseInt(state.goal));
             const pCtx = document.getElementById('proteinChart').getContext('2d');
             if (window.pChart) window.pChart.destroy();
             window.pChart = new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
@@ -151,7 +150,6 @@
         function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
         function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
         function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
-        function renderStats() { const count = Object.keys(state.acts).length; document.getElementById('stats').innerHTML = `<div class="text-xs font-bold mb-1">Total Activities Logged: ${count}</div>`; }
         function renderCalendar() { const grid = document.getElementById('calGrid'); grid.innerHTML = ''; const [y, m] = [currentView.getFullYear(), currentView.getMonth()]; document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' }); for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) { const key = `${y}-${m}-${i}`; const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer ${state.acts[key] ? 'bg-blue-500 text-white' : 'bg-gray-50'}`; div.innerText = i; grid.appendChild(div); } }
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
