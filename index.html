@@ -59,8 +59,8 @@
                         <input type="number" id="pGoal" onchange="saveGoal()" class="border p-2 w-full rounded-lg">
                     </div>
                 </div>
-                <div class="mt-8 h-64">
-                    <canvas id="proteinChart"></canvas>
+                <div class="mt-8">
+                    <canvas id="proteinChart" class="max-h-64"></canvas>
                 </div>
             </div>
         </div>
@@ -82,37 +82,23 @@
         }
 
         // --- Protein Logic ---
-        function addProtein() {
-            const input = document.getElementById('pAdd');
-            const val = parseInt(input.value);
-            if(!isNaN(val)) {
-                state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val;
-                input.value = '';
-                save();
-            }
-        }
-
         function renderProtein() {
             const current = state.proteinLogs[todayKey] || 0;
             document.getElementById('currentProtein').innerText = current + "g";
             document.getElementById('pGoal').value = state.goal;
-            document.getElementById('motivator').classList.toggle('hidden', current < parseInt(state.goal));
+            document.getElementById('motivator').classList.toggle('hidden', current < state.goal);
             
             const pCtx = document.getElementById('proteinChart').getContext('2d');
-            if (window.pChart) window.pChart.destroy();
-            window.pChart = new Chart(pCtx, { 
-                type: 'bar', 
-                data: { 
-                    labels: Object.keys(state.proteinLogs).slice(-30), 
-                    datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false } 
-            });
+            new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
 
+        function addProtein() {
+            const val = parseInt(document.getElementById('pAdd').value);
+            if(val) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; save(); }
+        }
         function saveGoal() { state.goal = document.getElementById('pGoal').value; save(); }
 
-        // --- Existing Logic ---
+        // --- Existing Logic (Unchanged) ---
         function renderStats() {
             const today = new Date();
             const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
@@ -125,4 +111,22 @@
             const grid = document.getElementById('calGrid'); grid.innerHTML = '';
             const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
             document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
-            for (let i = 1; i <= new Date(y, m + 1, 0).
+            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+                const key = `${y}-${m}-${i}`; const activity = state.acts[key]; const color = activityColors[activity] || 'bg-gray-50';
+                const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer transition ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
+                div.innerText = i;
+                div.onclick = () => { if (activity && confirm(`Remove ${activity} log?`)) { delete state.acts[key]; save(); } }; grid.appendChild(div);
+            }
+        }
+
+        function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
+        function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
+        function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
+        let chart;
+        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb', tension: 0.4 }] } }); }
+        function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'fitness_backup.json'; a.click(); }
+        function importData(e) { const r = new FileReader(); r.onload = (event) => { state = JSON.parse(event.target.result); save(); }; r.readAsText(e.target.files[0]); }
+        render();
+    </script>
+</body>
+</html>
