@@ -96,7 +96,7 @@
 
         function renderBadges() {
             const container = document.getElementById('badgeCase');
-            if (!container) return;
+            if (!container) return; 
             const defs = [
                 { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
                 { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
@@ -113,28 +113,8 @@
             `).join('');
         }
 
-        function renderCalendar() {
-            const grid = document.getElementById('calGrid');
-            if(!grid) return;
-            grid.innerHTML = '';
-            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
-            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
-            
-            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
-                const key = `${y}-${m}-${i}`;
-                const activity = state.acts[key];
-                // Apply specific color from activityColors map
-                const color = activityColors[activity] || 'bg-gray-50';
-                
-                const div = document.createElement('div');
-                div.className = `p-2 text-sm border rounded-lg cursor-pointer ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
-                div.innerText = i;
-                div.onclick = () => { if(activity && confirm('Remove '+activity+'?')) { delete state.acts[key]; save(); } };
-                grid.appendChild(div);
-            }
-        }
+        function checkAchievements() { alert("Scanning data..."); render(); }
 
-        // --- Other logic kept as before ---
         function renderStreakHeatmap() {
             const container = document.getElementById('streakHeatmap');
             if(!container) return;
@@ -163,10 +143,10 @@
         function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
         function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
         function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
+        function renderCalendar() { const grid = document.getElementById('calGrid'); if(!grid) return; grid.innerHTML = ''; const [y, m] = [currentView.getFullYear(), currentView.getMonth()]; document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' }); for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) { const key = `${y}-${m}-${i}`; const activity = state.acts[key]; const color = activityColors[activity] || 'bg-gray-50'; const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`; div.innerText = i; div.onclick = () => { if(activity && confirm('Remove '+activity+'?')) { delete state.acts[key]; save(); } }; grid.appendChild(div); } }
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
-        function checkAchievements() { alert("Scanning data..."); render(); }
         let chart;
         function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } }); }
         function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
