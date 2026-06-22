@@ -15,16 +15,13 @@
 <body class="bg-gray-100 p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-6">
         
-        <!-- Header with Integrated Badges -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
                 <button onclick="checkAchievements()" class="text-[10px] uppercase font-bold text-blue-600 hover:text-blue-800 mt-1">Refresh Badges</button>
             </div>
             
-            <div id="badgeCase" class="flex gap-2">
-                <!-- Badges will be rendered here -->
-            </div>
+            <div id="badgeCase" class="flex gap-2"></div>
 
             <div class="flex gap-2">
                 <button onclick="exportData()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Export</button>
@@ -34,7 +31,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Weight Trend -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <h2 class="text-lg font-bold mb-4">Weight Trend</h2>
                 <canvas id="weightChart"></canvas>
@@ -44,7 +40,6 @@
                 </div>
             </div>
 
-            <!-- Activity Calendar -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">&larr;</button>
@@ -60,7 +55,6 @@
                 </div>
             </div>
 
-            <!-- Protein Tracker -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border col-span-1 md:col-span-2">
                 <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -119,11 +113,28 @@
             `).join('');
         }
 
-        function checkAchievements() {
-            alert("Scanning data... Badges updated!");
-            render();
+        function renderCalendar() {
+            const grid = document.getElementById('calGrid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
+            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+                const key = `${y}-${m}-${i}`;
+                const activity = state.acts[key];
+                // Apply specific color from activityColors map
+                const color = activityColors[activity] || 'bg-gray-50';
+                
+                const div = document.createElement('div');
+                div.className = `p-2 text-sm border rounded-lg cursor-pointer ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
+                div.innerText = i;
+                div.onclick = () => { if(activity && confirm('Remove '+activity+'?')) { delete state.acts[key]; save(); } };
+                grid.appendChild(div);
+            }
         }
 
+        // --- Other logic kept as before ---
         function renderStreakHeatmap() {
             const container = document.getElementById('streakHeatmap');
             if(!container) return;
@@ -152,10 +163,10 @@
         function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
         function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
         function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
-        function renderCalendar() { const grid = document.getElementById('calGrid'); if(!grid) return; grid.innerHTML = ''; const [y, m] = [currentView.getFullYear(), currentView.getMonth()]; document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' }); for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) { const key = `${y}-${m}-${i}`; const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer ${state.acts[key] ? 'bg-blue-500 text-white' : 'bg-gray-50'}`; div.innerText = i; grid.appendChild(div); } }
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
+        function checkAchievements() { alert("Scanning data..."); render(); }
         let chart;
         function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } }); }
         function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
