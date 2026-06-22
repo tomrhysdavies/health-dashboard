@@ -6,7 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Health Dashboard</title>
     <style>
-        .pixel-badge { min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid #e5e7eb; border-radius: 6px; background: #f9fafb; margin: 2px; }
+        .pixel-badge { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid #e5e7eb; border-radius: 6px; background: #f9fafb; }
         .badge-lit { border-color: #3b82f6; opacity: 1; filter: grayscale(0%); }
         .badge-dim { border-color: #e5e7eb; opacity: 0.4; filter: grayscale(100%); }
         .badge-count { position: absolute; bottom: -6px; right: -6px; background: #4b5563; color: white; font-size: 9px; padding: 1px 4px; font-weight: bold; border-radius: 4px; }
@@ -21,7 +21,7 @@
                 <button onclick="checkAchievements()" class="text-[10px] uppercase font-bold text-blue-600 hover:text-blue-800 mt-1">Refresh Badges</button>
             </div>
             
-            <div id="badgeCase" class="flex gap-2 min-h-[50px] items-center"></div>
+            <div id="badgeCase" class="flex gap-2"></div>
 
             <div class="flex gap-2">
                 <button onclick="exportData()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Export</button>
@@ -91,8 +91,7 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderBadges();
-            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap();
+            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap(); renderBadges();
         }
 
         function renderBadges() {
@@ -106,15 +105,12 @@
                 { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
                 { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
             ];
-            container.innerHTML = defs.map(b => {
-                const count = state.badges[b.id] || 0;
-                return `
-                    <div class="pixel-badge ${count > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
-                        <span class="text-xl">${b.icon}</span>
-                        <span class="badge-count">${count}</span>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = defs.map(b => `
+                <div class="pixel-badge ${state.badges[b.id] > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
+                    <span class="text-xl">${b.icon}</span>
+                    <span class="badge-count">${state.badges[b.id]}</span>
+                </div>
+            `).join('');
         }
 
         function checkAchievements() { alert("Scanning data..."); render(); }
