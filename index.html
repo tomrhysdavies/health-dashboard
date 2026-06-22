@@ -15,7 +15,7 @@
 <body class="bg-gray-100 p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-6">
         
-        <!-- Updated Header with Integrated Badges -->
+        <!-- Header with Integrated Badges -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
@@ -23,7 +23,7 @@
             </div>
             
             <div id="badgeCase" class="flex gap-2">
-                <!-- Badges rendered here -->
+                <!-- Badges will be rendered here -->
             </div>
 
             <div class="flex gap-2">
@@ -102,6 +102,7 @@
 
         function renderBadges() {
             const container = document.getElementById('badgeCase');
+            if (!container) return;
             const defs = [
                 { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
                 { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
@@ -119,12 +120,13 @@
         }
 
         function checkAchievements() {
-            alert("Scanning data... Badges will light up once criteria are met!");
+            alert("Scanning data... Badges updated!");
             render();
         }
 
         function renderStreakHeatmap() {
             const container = document.getElementById('streakHeatmap');
+            if(!container) return;
             container.innerHTML = '';
             const today = new Date();
             const startOfWeek = new Date(today);
@@ -150,7 +152,7 @@
         function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
         function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
         function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
-        function renderCalendar() { const grid = document.getElementById('calGrid'); grid.innerHTML = ''; const [y, m] = [currentView.getFullYear(), currentView.getMonth()]; document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' }); for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) { const key = `${y}-${m}-${i}`; const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer ${state.acts[key] ? 'bg-blue-500 text-white' : 'bg-gray-50'}`; div.innerText = i; grid.appendChild(div); } }
+        function renderCalendar() { const grid = document.getElementById('calGrid'); if(!grid) return; grid.innerHTML = ''; const [y, m] = [currentView.getFullYear(), currentView.getMonth()]; document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' }); for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) { const key = `${y}-${m}-${i}`; const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer ${state.acts[key] ? 'bg-blue-500 text-white' : 'bg-gray-50'}`; div.innerText = i; grid.appendChild(div); } }
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
