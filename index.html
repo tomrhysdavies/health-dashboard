@@ -7,35 +7,47 @@
     <title>Health Dashboard</title>
 </head>
 <body class="bg-gray-50 p-8">
-    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="max-w-5xl mx-auto space-y-8">
         
-        <div class="bg-white p-6 rounded-xl shadow border">
-            <h2 class="text-xl font-bold mb-4">Weight Trend</h2>
-            <canvas id="weightChart"></canvas>
-            <div class="mt-4 flex gap-2">
-                <input type="number" id="wVal" placeholder="Kg" class="border p-2 rounded w-20">
-                <button onclick="saveWeight()" class="bg-blue-600 text-white px-4 py-2 rounded">Log Weight</button>
+        <div class="bg-white p-6 rounded-xl shadow border flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Health Dashboard</h1>
+            <div id="stats" class="text-sm font-semibold"></div>
+            <div>
+                <button onclick="exportData()" class="text-xs bg-gray-200 px-2 py-1 rounded">Export Backup</button>
+                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
+                <button onclick="document.getElementById('importFile').click()" class="text-xs bg-gray-200 px-2 py-1 rounded">Import</button>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow border">
-            <div class="flex justify-between mb-4">
-                <button onclick="changeMonth(-1)">Prev</button>
-                <h2 id="monthLabel" class="font-bold text-xl"></h2>
-                <button onclick="changeMonth(1)">Next</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow border">
+                <h2 class="text-xl font-bold mb-4">Weight Trend</h2>
+                <canvas id="weightChart"></canvas>
+                <div class="mt-4 flex gap-2">
+                    <input type="number" id="wVal" placeholder="Kg" class="border p-2 rounded w-20">
+                    <button onclick="saveWeight()" class="bg-blue-600 text-white px-4 py-2 rounded">Log Weight</button>
+                </div>
             </div>
-            <div id="calGrid" class="grid grid-cols-7 gap-2 text-center"></div>
-        </div>
 
-        <div class="bg-white p-6 rounded-xl shadow border col-span-1 md:col-span-2">
-            <h2 class="text-xl font-bold mb-4">Recipe Library</h2>
-            <div class="grid grid-cols-3 gap-4 mb-4">
-                <input id="rName" placeholder="Name" class="border p-2 rounded">
-                <input id="rMethod" placeholder="Method" class="border p-2 rounded">
-                <input id="rProt" type="number" placeholder="Protein (g)" class="border p-2 rounded">
-                <button onclick="saveRecipe()" class="bg-purple-600 text-white p-2 rounded col-span-3">Add Recipe</button>
+            <div class="bg-white p-6 rounded-xl shadow border">
+                <div class="flex justify-between mb-4">
+                    <button onclick="changeMonth(-1)">&#9664;</button>
+                    <h2 id="monthLabel" class="font-bold text-xl"></h2>
+                    <button onclick="changeMonth(1)">&#9654;</button>
+                </div>
+                <div id="calGrid" class="grid grid-cols-7 gap-1 text-center"></div>
+                <div class="mt-4 flex gap-2">
+                    <button onclick="quickLog('Padel')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Log Padel</button>
+                    <button onclick="quickLog('Gym')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Log Gym</button>
+                    <button onclick="quickLog('Run')" class="bg-orange-500 text-white px-3 py-1 rounded text-sm">Log Run</button>
+                </div>
             </div>
-            <div id="recipeGrid" class="grid grid-cols-3 gap-4"></div>
+
+            <div class="bg-white p-6 rounded-xl shadow border col-span-1 md:col-span-2">
+                <h2 class="text-xl font-bold mb-4">My Recipes</h2>
+                <input type="text" id="search" oninput="renderRecipes()" placeholder="Search recipes..." class="border p-2 w-full mb-4 rounded">
+                <div id="recipeGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </div>
         </div>
     </div>
 
@@ -43,71 +55,76 @@
         let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, recipes: [] };
         let currentView = new Date();
 
+        function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
+
         function render() {
             renderWeightChart();
             renderCalendar();
             renderRecipes();
+            renderStats();
         }
 
-        // --- CALENDAR LOGIC ---
+        function renderStats() {
+            const thisWeek = new Date().getWeek();
+            const activeCount = Object.keys(state.acts).filter(d => new Date(d).getWeek() === thisWeek).length;
+            document.getElementById('stats').innerText = `Active Days this week: ${activeCount}/3`;
+        }
+
+        // Calendar & Loggers
         function renderCalendar() {
             const grid = document.getElementById('calGrid');
             grid.innerHTML = '';
-            const year = currentView.getFullYear();
-            const month = currentView.getMonth();
+            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
             document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
-            
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dateKey = `${year}-${month}-${i}`;
-                const entry = state.acts[dateKey];
+            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+                const key = `${y}-${m+1}-${i}`;
                 const div = document.createElement('div');
-                div.className = `p-2 border rounded cursor-pointer ${entry ? 'bg-green-500 text-white' : 'bg-gray-100'}`;
+                div.className = `p-2 border rounded cursor-pointer ${state.acts[key] ? 'bg-green-500 text-white' : 'bg-gray-100'}`;
                 div.innerText = i;
-                div.title = entry || "Click to add activity";
-                div.onclick = () => {
-                    const text = prompt("Activity for day " + i, entry || "");
-                    if (text !== null) { state.acts[dateKey] = text; save(); render(); }
-                };
+                div.title = state.acts[key] || "Click to add activity";
+                div.onclick = () => { const t = prompt("Activity?", state.acts[key] || ""); if(t) { state.acts[key] = t; save(); } };
                 grid.appendChild(div);
             }
         }
 
-        function changeMonth(delta) { currentView.setMonth(currentView.getMonth() + delta); render(); }
+        function quickLog(type) {
+            const key = new Date().toISOString().split('T')[0];
+            state.acts[key] = type;
+            save();
+        }
 
-        // --- WEIGHT CHART LOGIC ---
+        // Charts & Data
         let chart;
         function renderWeightChart() {
             const ctx = document.getElementById('weightChart').getContext('2d');
-            if (chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: state.weights.map(w => w.date),
-                    datasets: [{ label: 'Weight (kg)', data: state.weights.map(w => w.val), borderColor: '#2563eb', tension: 0.3 }]
-                }
-            });
-        }
-
-        function saveWeight() {
-            state.weights.push({ date: new Date().toLocaleDateString(), val: document.getElementById('wVal').value });
-            save(); render();
-        }
-
-        function saveRecipe() {
-            state.recipes.push({ n: document.getElementById('rName').value, m: document.getElementById('rMethod').value, p: document.getElementById('rProt').value });
-            save(); render();
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Weight (kg)', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } });
         }
 
         function renderRecipes() {
-            document.getElementById('recipeGrid').innerHTML = state.recipes.map(r => `
+            const query = document.getElementById('search').value.toLowerCase();
+            document.getElementById('recipeGrid').innerHTML = state.recipes.filter(r => r.n.toLowerCase().includes(query)).map(r => `
                 <div class="border p-4 rounded bg-gray-50">
-                    <h3 class="font-bold">${r.n}</h3><p class="text-xs text-gray-500">${r.m}</p>
+                    <h3 class="font-bold">${r.n}</h3>
                     <p class="text-green-600 font-bold">${r.p}g Protein</p>
                 </div>`).join('');
         }
 
-        function save() { localStorage.setItem('fitData', JSON.stringify(state)); }
+        // Backup Helpers
+        function exportData() {
+            const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'fitness_backup.json'; a.click();
+        }
+
+        function importData(e) {
+            const reader = new FileReader();
+            reader.onload = (event) => { state = JSON.parse(event.target.result); save(); };
+            reader.readAsText(e.target.files[0]);
+        }
+
+        Date.prototype.getWeek = function() { const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const y = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d-y)/86400000)+1)/7); };
+
         render();
     </script>
 </body>
