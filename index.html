@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Health Tracker</title>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Weight Tracker</h2>
+            <input type="number" id="weightInput" placeholder="Enter Weight (kg)" class="border p-2 w-full mb-2">
+            <button onclick="addWeight()" class="bg-blue-500 text-white p-2 w-full rounded">Log Weight</button>
+            <canvas id="weightChart" class="mt-4"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Activity Logger</h2>
+            <select id="activityType" class="border p-2 w-full mb-2">
+                <option>Gym</option>
+                <option>Padel</option>
+                <option>CouchTo5k</option>
+            </select>
+            <button onclick="addActivity()" class="bg-green-500 text-white p-2 w-full rounded">Log Active Day</button>
+            <div id="activityList" class="mt-4 text-sm"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow col-span-1 md:col-span-2">
+            <h2 class="text-xl font-bold mb-4">My Recipes</h2>
+            <input type="text" id="recipeName" placeholder="Recipe Name" class="border p-2 w-full mb-2">
+            <button onclick="addRecipe()" class="bg-purple-500 text-white p-2 w-full rounded">Add Recipe</button>
+            <ul id="recipeList" class="mt-4 list-disc pl-5"></ul>
+        </div>
+    </div>
+
+    <script>
+        let data = JSON.parse(localStorage.getItem('fitnessData')) || { weights: [], activities: [], recipes: [] };
+
+        function updateUI() {
+            // Render Activities
+            document.getElementById('activityList').innerHTML = data.activities.map(a => `<p>${a.type} - ${a.date}</p>`).join('');
+            // Render Recipes
+            document.getElementById('recipeList').innerHTML = data.recipes.map(r => `<li>${r}</li>`).join('');
+            // Update Chart (simplified)
+            renderChart();
+        }
+
+        function addWeight() {
+            const w = document.getElementById('weightInput').value;
+            data.weights.push({ date: new Date().toLocaleDateString(), value: w });
+            localStorage.setItem('fitnessData', JSON.stringify(data));
+            updateUI();
+        }
+
+        function addActivity() {
+            const type = document.getElementById('activityType').value;
+            data.activities.push({ type, date: new Date().toLocaleDateString() });
+            localStorage.setItem('fitnessData', JSON.stringify(data));
+            updateUI();
+        }
+
+        function addRecipe() {
+            const name = document.getElementById('recipeName').value;
+            data.recipes.push(name);
+            localStorage.setItem('fitnessData', JSON.stringify(data));
+            updateUI();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.weights.map(w => w.date),
+                    datasets: [{ label: 'Weight (kg)', data: data.weights.map(w => w.value), borderColor: '#3b82f6' }]
+                }
+            });
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
