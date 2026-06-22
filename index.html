@@ -8,14 +8,10 @@
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-6">
-        
-        <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border flex justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
-            <div id="stats" class="w-full md:w-1/2"></div>
             <div class="flex gap-2">
-                <button onclick="exportData()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Export</button>
-                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
-                <button onclick="document.getElementById('importFile').click()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Import</button>
+                <button onclick="exportData()" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Export</button>
             </div>
         </div>
 
@@ -25,43 +21,27 @@
                 <canvas id="weightChart"></canvas>
                 <div class="mt-4 flex gap-2">
                     <input type="number" id="wVal" placeholder="Kg" class="border p-2 rounded-lg w-full">
-                    <button onclick="saveWeight()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">Log</button>
+                    <button onclick="saveWeight()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Log</button>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
-                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">&larr;</button>
-                    <h2 id="monthLabel" class="font-bold text-lg"></h2>
-                    <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-lg">&rarr;</button>
+                    <button onclick="changeMonth(-1)">&larr;</button>
+                    <h2 id="monthLabel" class="font-bold"></h2>
+                    <button onclick="changeMonth(1)">&rarr;</button>
                 </div>
                 <div id="calGrid" class="grid grid-cols-7 gap-1 text-center"></div>
-                <div class="mt-6 flex gap-2">
-                    <button onclick="quickLog('Padel')" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-green-600">Padel</button>
-                    <button onclick="quickLog('Gym')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-700">Gym</button>
-                    <button onclick="quickLog('Run')" class="flex-1 bg-orange-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-orange-600">Run</button>
-                </div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
+                <h2 class="text-lg font-bold mb-4">Daily Protein</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div class="text-center">
-                        <h1 id="currentProtein" class="text-5xl font-bold text-blue-600">0g</h1>
-                        <div id="motivator" class="mt-2 text-green-600 font-bold hidden">🎉 Target Met!</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="number" id="pAdd" placeholder="Add Protein (g)" class="border p-2 rounded-lg w-full">
-                        <button onclick="addProtein()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Add</button>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-bold uppercase">Daily Goal (g):</label>
-                        <input type="number" id="pGoal" onchange="saveGoal()" class="border p-2 w-full rounded-lg">
-                    </div>
+                    <div><h1 id="currentProtein" class="text-4xl font-bold text-blue-600">0g</h1><div id="motivator" class="hidden text-green-600 font-bold">🎉 Target Met!</div></div>
+                    <div class="flex gap-2"><input type="number" id="pAdd" class="border p-2 rounded-lg w-full"><button onclick="addProtein()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Add</button></div>
+                    <div>Goal (g): <input type="number" id="pGoal" onchange="saveGoal()" class="border p-1 w-20"></div>
                 </div>
-                <div class="mt-8">
-                    <canvas id="proteinChart" class="max-h-64"></canvas>
-                </div>
+                <div class="mt-4 h-48"><canvas id="proteinChart"></canvas></div>
             </div>
         </div>
     </div>
@@ -69,42 +49,15 @@
     <script>
         let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, proteinLogs: {}, goal: 150 };
         let currentView = new Date();
-        const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500' };
         const todayKey = new Date().toISOString().split('T')[0];
 
-        function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
+        function save() { localStorage.setItem('fitData', JSON.stringify(state)); renderAll(); }
 
-        function render() {
-            renderWeightChart();
-            renderCalendar();
-            renderStats();
-            renderProtein();
-        }
-
-        // --- Protein Logic ---
-        function renderProtein() {
-            const current = state.proteinLogs[todayKey] || 0;
-            document.getElementById('currentProtein').innerText = current + "g";
-            document.getElementById('pGoal').value = state.goal;
-            document.getElementById('motivator').classList.toggle('hidden', current < state.goal);
-            
-            const pCtx = document.getElementById('proteinChart').getContext('2d');
-            new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
-        }
-
-        function addProtein() {
-            const val = parseInt(document.getElementById('pAdd').value);
-            if(val) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; save(); }
-        }
-        function saveGoal() { state.goal = document.getElementById('pGoal').value; save(); }
-
-        // --- Existing Logic (Unchanged) ---
-        function renderStats() {
-            const today = new Date();
-            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-            const count = Object.keys(state.acts).filter(d => new Date(d) >= startOfWeek).length;
-            const progress = Math.min((count / 3) * 100, 100);
-            document.getElementById('stats').innerHTML = `<div class="flex justify-between text-xs font-bold mb-1"><span>Weekly Activity</span><span>${count} / 3 Days</span></div><div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden"><div class="bg-green-500 h-full transition-all duration-700 ease-out" style="width: ${progress}%"></div></div>`;
+        // Independent Renderers
+        function renderWeight() {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            if(window.wChart) window.wChart.destroy();
+            window.wChart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } });
         }
 
         function renderCalendar() {
@@ -112,21 +65,34 @@
             const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
             document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
             for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
-                const key = `${y}-${m}-${i}`; const activity = state.acts[key]; const color = activityColors[activity] || 'bg-gray-50';
-                const div = document.createElement('div'); div.className = `p-2 text-sm border rounded-lg cursor-pointer transition ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
+                const key = `${y}-${m}-${i}`; const act = state.acts[key];
+                const div = document.createElement('div');
+                div.className = `p-2 border rounded cursor-pointer ${act ? 'bg-blue-500 text-white' : 'bg-gray-50'}`;
                 div.innerText = i;
-                div.onclick = () => { if (activity && confirm(`Remove ${activity} log?`)) { delete state.acts[key]; save(); } }; grid.appendChild(div);
+                div.onclick = () => { if(act && confirm('Remove?')) { delete state.acts[key]; save(); } };
+                grid.appendChild(div);
             }
         }
 
-        function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
-        function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
-        function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
-        let chart;
-        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb', tension: 0.4 }] } }); }
-        function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'fitness_backup.json'; a.click(); }
-        function importData(e) { const r = new FileReader(); r.onload = (event) => { state = JSON.parse(event.target.result); save(); }; r.readAsText(e.target.files[0]); }
-        render();
+        function renderProtein() {
+            const current = state.proteinLogs[todayKey] || 0;
+            document.getElementById('currentProtein').innerText = current + "g";
+            document.getElementById('pGoal').value = state.goal;
+            document.getElementById('motivator').classList.toggle('hidden', current < parseInt(state.goal));
+            const ctx = document.getElementById('proteinChart').getContext('2d');
+            if(window.pChart) window.pChart.destroy();
+            window.pChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'g', data: Object.values(state.proteinLogs).slice(-30) }] } });
+        }
+
+        function renderAll() { renderWeight(); renderCalendar(); renderProtein(); }
+        
+        function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; save(); } }
+        function saveGoal() { state.goal = document.getElementById('pGoal').value; save(); }
+        function saveWeight() { state.weights.push({ d: new Date().toLocaleDateString(), v: document.getElementById('wVal').value }); save(); }
+        function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); renderCalendar(); }
+        function exportData() { const b = new Blob([JSON.stringify(state)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
+        
+        renderAll();
     </script>
 </body>
 </html>
