@@ -9,86 +9,98 @@
 <body class="bg-gray-100 p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-6">
         
-        <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
-            <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
-            <div id="stats" class="w-full md:w-1/2"></div>
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="bg-gray-100 px-4 py-2 rounded-lg text-sm">Export</button>
-            </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Health Dashboard</h1>
+            <button onclick="exportData()" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Export Data</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                <h2 class="text-lg font-bold mb-4">Daily Protein Tracker</h2>
+                <h2 class="text-lg font-bold mb-4">Daily Protein</h2>
                 <div class="text-center py-4">
-                    <p class="text-sm text-gray-500">Current Intake</p>
                     <h1 id="currentProtein" class="text-5xl font-bold text-blue-600">0g</h1>
                     <div id="motivator" class="mt-2 text-green-600 font-bold hidden">🎉 Target Met!</div>
                 </div>
-                <div class="flex gap-2 mt-4">
+                <div class="flex gap-2">
                     <input type="number" id="pAdd" placeholder="Add (g)" class="border p-2 rounded-lg w-full">
                     <button onclick="addProtein()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Add</button>
                 </div>
                 <div class="mt-4">
-                    <label class="text-xs text-gray-500">Set Daily Goal (g):</label>
+                    <label class="text-xs text-gray-500">Goal (g):</label>
                     <input type="number" id="pGoal" onchange="saveGoal()" class="border p-1 w-20 rounded">
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                <h2 class="text-lg font-bold mb-4">30-Day Protein Trend</h2>
-                <canvas id="proteinChart"></canvas>
+                <h2 class="text-lg font-bold mb-4">Weight Trend</h2>
+                <canvas id="weightChart"></canvas>
+                <div class="flex gap-2 mt-2">
+                    <input type="number" id="wVal" placeholder="Kg" class="border p-2 rounded-lg w-full">
+                    <button onclick="saveWeight()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Log</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border col-span-1 md:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">&larr;</button>
+                    <h2 id="monthLabel" class="font-bold text-lg"></h2>
+                    <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-lg">&rarr;</button>
+                </div>
+                <div id="calGrid" class="grid grid-cols-7 gap-1 text-center"></div>
+                <div class="mt-4 flex gap-2">
+                    <button onclick="quickLog('Padel')" class="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold">Padel</button>
+                    <button onclick="quickLog('Gym')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold">Gym</button>
+                    <button onclick="quickLog('Run')" class="flex-1 bg-orange-500 text-white py-2 rounded-lg font-bold">Run</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, proteinLogs: {}, goal: 150 };
+        let currentView = new Date();
+        const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500' };
         const todayKey = new Date().toISOString().split('T')[0];
 
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderProtein();
-            renderChart();
-        }
-
-        function renderProtein() {
+            // Protein
             const current = state.proteinLogs[todayKey] || 0;
             document.getElementById('currentProtein').innerText = current + "g";
             document.getElementById('pGoal').value = state.goal;
             document.getElementById('motivator').classList.toggle('hidden', current < state.goal);
+
+            // Weight
+            const wCtx = document.getElementById('weightChart').getContext('2d');
+            new Chart(wCtx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } });
+
+            // Calendar
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
+            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
+            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+                const key = `${y}-${m}-${i}`;
+                const activity = state.acts[key];
+                const div = document.createElement('div');
+                div.className = `p-2 border rounded-lg cursor-pointer ${activity ? activityColors[activity] + ' text-white' : 'bg-gray-50'}`;
+                div.innerText = i;
+                div.onclick = () => { if(activity && confirm('Remove '+activity+'?')) { delete state.acts[key]; save(); } };
+                grid.appendChild(div);
+            }
         }
 
         function addProtein() {
             const val = parseInt(document.getElementById('pAdd').value);
-            if(val) {
-                state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val;
-                save();
-            }
+            if(val) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; save(); }
         }
-
         function saveGoal() { state.goal = document.getElementById('pGoal').value; save(); }
-
-        let chart;
-        function renderChart() {
-            const ctx = document.getElementById('proteinChart').getContext('2d');
-            const last30Days = Object.entries(state.proteinLogs).slice(-30);
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: last30Days.map(x => x[0]),
-                    datasets: [{ label: 'Protein (g)', data: last30Days.map(x => x[1]), backgroundColor: '#2563eb' }]
-                }
-            });
-        }
-
-        function exportData() {
-            const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fitness_backup.json'; a.click();
-        }
-
+        function saveWeight() { state.weights.push({ d: new Date().toLocaleDateString(), v: document.getElementById('wVal').value }); save(); }
+        function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
+        function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
+        function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
+        
         render();
     </script>
 </body>
