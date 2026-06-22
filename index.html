@@ -13,7 +13,7 @@
             <h1 class="text-2xl font-bold">Health Dashboard</h1>
             <div id="stats" class="text-sm font-semibold"></div>
             <div>
-                <button onclick="exportData()" class="text-xs bg-gray-200 px-2 py-1 rounded">Export Backup</button>
+                <button onclick="exportData()" class="text-xs bg-gray-200 px-2 py-1 rounded">Export</button>
                 <input type="file" id="importFile" class="hidden" onchange="importData(event)">
                 <button onclick="document.getElementById('importFile').click()" class="text-xs bg-gray-200 px-2 py-1 rounded">Import</button>
             </div>
@@ -45,6 +45,12 @@
 
             <div class="bg-white p-6 rounded-xl shadow border col-span-1 md:col-span-2">
                 <h2 class="text-xl font-bold mb-4">My Recipes</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <input id="rName" placeholder="Name" class="border p-2 rounded">
+                    <input id="rMethod" placeholder="Method" class="border p-2 rounded">
+                    <input id="rProt" type="number" placeholder="Protein (g)" class="border p-2 rounded">
+                    <button onclick="saveRecipe()" class="bg-purple-600 text-white p-2 rounded">Add Recipe</button>
+                </div>
                 <input type="text" id="search" oninput="renderRecipes()" placeholder="Search recipes..." class="border p-2 w-full mb-4 rounded">
                 <div id="recipeGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </div>
@@ -64,27 +70,10 @@
             renderStats();
         }
 
-        function renderStats() {
-            const thisWeek = new Date().getWeek();
-            const activeCount = Object.keys(state.acts).filter(d => new Date(d).getWeek() === thisWeek).length;
-            document.getElementById('stats').innerText = `Active Days this week: ${activeCount}/3`;
-        }
-
-        // Calendar & Loggers
-        function renderCalendar() {
-            const grid = document.getElementById('calGrid');
-            grid.innerHTML = '';
-            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
-            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
-            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
-                const key = `${y}-${m+1}-${i}`;
-                const div = document.createElement('div');
-                div.className = `p-2 border rounded cursor-pointer ${state.acts[key] ? 'bg-green-500 text-white' : 'bg-gray-100'}`;
-                div.innerText = i;
-                div.title = state.acts[key] || "Click to add activity";
-                div.onclick = () => { const t = prompt("Activity?", state.acts[key] || ""); if(t) { state.acts[key] = t; save(); } };
-                grid.appendChild(div);
-            }
+        // --- Functions ---
+        function saveWeight() {
+            const v = document.getElementById('wVal').value;
+            if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); }
         }
 
         function quickLog(type) {
@@ -93,7 +82,34 @@
             save();
         }
 
-        // Charts & Data
+        function saveRecipe() {
+            state.recipes.push({ n: document.getElementById('rName').value, m: document.getElementById('rMethod').value, p: document.getElementById('rProt').value });
+            save();
+        }
+
+        function renderStats() {
+            const activeCount = Object.keys(state.acts).length;
+            document.getElementById('stats').innerText = `Total Active Days: ${activeCount}`;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
+            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
+            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+                const key = `${y}-${m}-${i}`; // Updated key format
+                const div = document.createElement('div');
+                div.className = `p-2 border rounded cursor-pointer ${state.acts[key] ? 'bg-green-500 text-white' : 'bg-gray-100'}`;
+                div.innerText = i;
+                div.title = state.acts[key] || "Click to add";
+                div.onclick = () => { const t = prompt("Activity?", state.acts[key] || ""); if(t) { state.acts[key] = t; save(); } };
+                grid.appendChild(div);
+            }
+        }
+
+        function changeMonth(delta) { currentView.setMonth(currentView.getMonth() + delta); render(); }
+
         let chart;
         function renderWeightChart() {
             const ctx = document.getElementById('weightChart').getContext('2d');
@@ -106,15 +122,14 @@
             document.getElementById('recipeGrid').innerHTML = state.recipes.filter(r => r.n.toLowerCase().includes(query)).map(r => `
                 <div class="border p-4 rounded bg-gray-50">
                     <h3 class="font-bold">${r.n}</h3>
+                    <p class="text-sm text-gray-500">${r.m}</p>
                     <p class="text-green-600 font-bold">${r.p}g Protein</p>
                 </div>`).join('');
         }
 
-        // Backup Helpers
         function exportData() {
             const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'fitness_backup.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fitness_backup.json'; a.click();
         }
 
         function importData(e) {
@@ -122,8 +137,6 @@
             reader.onload = (event) => { state = JSON.parse(event.target.result); save(); };
             reader.readAsText(e.target.files[0]);
         }
-
-        Date.prototype.getWeek = function() { const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const y = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d-y)/86400000)+1)/7); };
 
         render();
     </script>
