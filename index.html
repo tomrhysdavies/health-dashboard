@@ -68,7 +68,19 @@
     </div>
 
     <script>
-        let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, recipes: [], proteinLogs: {}, goal: 150 };
+        // 1. SAFE LOAD: Force an empty object if the stored data is corrupted
+        let rawData = localStorage.getItem('fitData');
+        let state;
+        try {
+            state = rawData ? JSON.parse(rawData) : null;
+        } catch(e) { state = null; }
+        
+        if (!state || typeof state !== 'object') {
+            state = { weights: [], acts: {}, proteinLogs: {}, goal: 150 };
+        }
+        // Ensure sub-objects exist even if corrupt
+        if (!state.proteinLogs) state.proteinLogs = {};
+
         let currentView = new Date();
         const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500' };
         const todayKey = new Date().toISOString().split('T')[0];
@@ -82,12 +94,14 @@
             renderProtein();
         }
 
-        // --- Protein Logic ---
         function renderProtein() {
+            // Safety check: ensure proteinLogs exists
+            if (!state.proteinLogs) state.proteinLogs = {};
+            
             const current = state.proteinLogs[todayKey] || 0;
             document.getElementById('currentProtein').innerText = current + "g";
-            document.getElementById('pGoal').value = state.goal;
-            document.getElementById('motivator').classList.toggle('hidden', current < parseInt(state.goal));
+            document.getElementById('pGoal').value = state.goal || 150;
+            document.getElementById('motivator').classList.toggle('hidden', current < parseInt(state.goal || 150));
             
             const pCtx = document.getElementById('proteinChart').getContext('2d');
             if (window.pChart) window.pChart.destroy();
@@ -101,24 +115,14 @@
             });
         }
 
-        function toggleGoalEdit() {
-            const goalInput = document.getElementById('pGoal');
-            goalInput.disabled = !goalInput.disabled;
-            if (!goalInput.disabled) goalInput.focus();
-        }
-
         function addProtein() {
-            const inputField = document.getElementById('pAdd');
-            const val = parseInt(inputField.value);
-            
-            console.log("Adding protein:", val); // You will see this in F12 -> Console
-
-            if(!isNaN(val) && val > 0) {
+            const input = document.getElementById('pAdd');
+            const val = parseInt(input.value);
+            if(!isNaN(val)) {
+                if (!state.proteinLogs) state.proteinLogs = {};
                 state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val;
-                inputField.value = ''; // Clear the box
-                save(); // This triggers render(), which redraws the protein total and chart
-            } else {
-                alert("Please enter a valid number of grams.");
+                input.value = '';
+                save();
             }
         }
 
@@ -128,7 +132,12 @@
             save(); 
         }
 
-        // --- Existing Logic ---
+        function toggleGoalEdit() {
+            const goalInput = document.getElementById('pGoal');
+            goalInput.disabled = !goalInput.disabled;
+            if (!goalInput.disabled) goalInput.focus();
+        }
+
         function renderStats() {
             const today = new Date();
             const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
@@ -153,12 +162,14 @@
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
         
-        let chart;
-        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb', tension: 0.4 }] } }); }
-        
+        function renderWeightChart() { 
+            const ctx = document.getElementById('weightChart').getContext('2d'); 
+            if(window.wChart) window.wChart.destroy(); 
+            window.wChart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb', tension: 0.4 }] } }); 
+        }
+
         function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
         function importData(e) { const r = new FileReader(); r.onload = (event) => { state = JSON.parse(event.target.result); save(); }; r.readAsText(e.target.files[0]); }
+        
         render();
     </script>
-</body>
-</html>
