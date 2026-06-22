@@ -3,100 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Personal Health Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Health Dashboard</title>
 </head>
-<body class="bg-gray-50 p-4 md:p-8">
-    <div class="max-w-5xl mx-auto space-y-8">
+<body class="bg-gray-50 p-8">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
         
-        <h1 class="text-3xl font-bold">Health & Fitness Tracker</h1>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 class="text-xl font-bold mb-4">Weight Tracker (Weekly)</h2>
-                <div class="flex gap-2 mb-4">
-                    <input type="number" id="weightVal" placeholder="Kg" class="border p-2 rounded w-24">
-                    <button onclick="addWeight()" class="bg-blue-600 text-white px-4 py-2 rounded">Log Weekly Weight</button>
-                </div>
-                <div id="weightHistory" class="text-sm text-gray-700"></div>
+        <div class="bg-white p-6 rounded-xl shadow border">
+            <h2 class="text-xl font-bold mb-4">Weight Trend</h2>
+            <canvas id="weightChart"></canvas>
+            <div class="mt-4 flex gap-2">
+                <input type="number" id="wVal" placeholder="Kg" class="border p-2 rounded w-20">
+                <button onclick="saveWeight()" class="bg-blue-600 text-white px-4 py-2 rounded">Log Weight</button>
             </div>
+        </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 class="text-xl font-bold mb-4">Monthly Active Days</h2>
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center"></div>
-                <button onclick="logToday()" class="mt-4 w-full bg-green-600 text-white py-2 rounded">Mark Today Active</button>
+        <div class="bg-white p-6 rounded-xl shadow border">
+            <div class="flex justify-between mb-4">
+                <button onclick="changeMonth(-1)">Prev</button>
+                <h2 id="monthLabel" class="font-bold text-xl"></h2>
+                <button onclick="changeMonth(1)">Next</button>
             </div>
+            <div id="calGrid" class="grid grid-cols-7 gap-2 text-center"></div>
+        </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border col-span-1 md:col-span-2">
-                <h2 class="text-xl font-bold mb-4">My Recipes</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <input type="text" id="recipeName" placeholder="Meal Name" class="border p-2 rounded">
-                    <input type="text" id="recipeMethod" placeholder="Instructions/Ingredients" class="border p-2 rounded">
-                    <input type="number" id="recipeProtein" placeholder="Protein (g)" class="border p-2 rounded">
-                    <button onclick="addRecipe()" class="bg-purple-600 text-white p-2 rounded col-span-1 md:col-span-3">Add Recipe</button>
-                </div>
-                <div id="recipeGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        <div class="bg-white p-6 rounded-xl shadow border col-span-1 md:col-span-2">
+            <h2 class="text-xl font-bold mb-4">Recipe Library</h2>
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <input id="rName" placeholder="Name" class="border p-2 rounded">
+                <input id="rMethod" placeholder="Method" class="border p-2 rounded">
+                <input id="rProt" type="number" placeholder="Protein (g)" class="border p-2 rounded">
+                <button onclick="saveRecipe()" class="bg-purple-600 text-white p-2 rounded col-span-3">Add Recipe</button>
             </div>
+            <div id="recipeGrid" class="grid grid-cols-3 gap-4"></div>
         </div>
     </div>
 
     <script>
-        let data = JSON.parse(localStorage.getItem('fitnessData')) || { weights: [], activities: [], recipes: [] };
+        let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, recipes: [] };
+        let currentView = new Date();
 
-        function updateUI() {
-            // Render Calendar (Simple 30-day view)
-            const cal = document.getElementById('calendarGrid');
-            cal.innerHTML = Array.from({length: 30}, (_, i) => i + 1).map(day => {
-                const isActive = data.activities.includes(day.toString());
-                return `<div class="p-2 border rounded ${isActive ? 'bg-green-500 text-white' : 'bg-gray-100'}">${day}</div>`;
-            }).join('');
+        function render() {
+            renderWeightChart();
+            renderCalendar();
+            renderRecipes();
+        }
 
-            // Render Weight History
-            document.getElementById('weightHistory').innerHTML = data.weights.map((w, i) => {
-                const diff = i > 0 ? (w.val - data.weights[i-1].val).toFixed(1) : 0;
-                return `<p class="border-b py-1">Week ${i+1}: ${w.val}kg <span class="text-gray-400">(${diff > 0 ? '+' : ''}${diff}kg)</span></p>`;
-            }).join('');
+        // --- CALENDAR LOGIC ---
+        function renderCalendar() {
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            const year = currentView.getFullYear();
+            const month = currentView.getMonth();
+            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateKey = `${year}-${month}-${i}`;
+                const entry = state.acts[dateKey];
+                const div = document.createElement('div');
+                div.className = `p-2 border rounded cursor-pointer ${entry ? 'bg-green-500 text-white' : 'bg-gray-100'}`;
+                div.innerText = i;
+                div.title = entry || "Click to add activity";
+                div.onclick = () => {
+                    const text = prompt("Activity for day " + i, entry || "");
+                    if (text !== null) { state.acts[dateKey] = text; save(); render(); }
+                };
+                grid.appendChild(div);
+            }
+        }
 
-            // Render Recipes
-            document.getElementById('recipeGrid').innerHTML = data.recipes.map(r => `
+        function changeMonth(delta) { currentView.setMonth(currentView.getMonth() + delta); render(); }
+
+        // --- WEIGHT CHART LOGIC ---
+        let chart;
+        function renderWeightChart() {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: state.weights.map(w => w.date),
+                    datasets: [{ label: 'Weight (kg)', data: state.weights.map(w => w.val), borderColor: '#2563eb', tension: 0.3 }]
+                }
+            });
+        }
+
+        function saveWeight() {
+            state.weights.push({ date: new Date().toLocaleDateString(), val: document.getElementById('wVal').value });
+            save(); render();
+        }
+
+        function saveRecipe() {
+            state.recipes.push({ n: document.getElementById('rName').value, m: document.getElementById('rMethod').value, p: document.getElementById('rProt').value });
+            save(); render();
+        }
+
+        function renderRecipes() {
+            document.getElementById('recipeGrid').innerHTML = state.recipes.map(r => `
                 <div class="border p-4 rounded bg-gray-50">
-                    <h3 class="font-bold text-lg">${r.name}</h3>
-                    <p class="text-sm text-gray-600 my-2">${r.method}</p>
-                    <p class="font-bold text-green-700">${r.protein}g Protein</p>
-                </div>
-            `).join('');
+                    <h3 class="font-bold">${r.n}</h3><p class="text-xs text-gray-500">${r.m}</p>
+                    <p class="text-green-600 font-bold">${r.p}g Protein</p>
+                </div>`).join('');
         }
 
-        function addWeight() {
-            const val = document.getElementById('weightVal').value;
-            if(val) {
-                data.weights.push({ val });
-                localStorage.setItem('fitnessData', JSON.stringify(data));
-                updateUI();
-            }
-        }
-
-        function logToday() {
-            const day = new Date().getDate().toString();
-            if(!data.activities.includes(day)) {
-                data.activities.push(day);
-                localStorage.setItem('fitnessData', JSON.stringify(data));
-                updateUI();
-            }
-        }
-
-        function addRecipe() {
-            const name = document.getElementById('recipeName').value;
-            const method = document.getElementById('recipeMethod').value;
-            const protein = document.getElementById('recipeProtein').value;
-            if(name) {
-                data.recipes.push({ name, method, protein });
-                localStorage.setItem('fitnessData', JSON.stringify(data));
-                updateUI();
-            }
-        }
-
-        updateUI();
+        function save() { localStorage.setItem('fitData', JSON.stringify(state)); }
+        render();
     </script>
 </body>
 </html>
