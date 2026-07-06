@@ -154,13 +154,33 @@
         }
 
         function renderProtein() {
-            const current = state.proteinLogs[todayKey] || 0;
-            document.getElementById('currentProtein').innerText = current + "g";
-            document.getElementById('pGoal').value = state.goal;
-            const pCtx = document.getElementById('proteinChart').getContext('2d');
-            if (window.pChart) window.pChart.destroy();
-            window.pChart = new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
+    const current = state.proteinLogs[todayKey] || 0;
+    document.getElementById('currentProtein').innerText = current + "g";
+    document.getElementById('pGoal').value = state.goal;
+    const pCtx = document.getElementById('proteinChart').getContext('2d');
+    if (window.pChart) window.pChart.destroy();
+    window.pChart = new Chart(pCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(state.proteinLogs).slice(-7), // Last 7 days
+            datasets: [{
+                label: 'Protein (g)',
+                data: Object.values(state.proteinLogs).slice(-7),
+                backgroundColor: '#3b82f6',
+                borderRadius: 8 // Softens the bar corners
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { display: false }, beginAtZero: true }
+            }
         }
+    });
+}
 
         function renderCalendar() {
             const grid = document.getElementById('calGrid');
@@ -196,7 +216,32 @@
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
-        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(window.chart) window.chart.destroy(); window.chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } }); }
+        function renderWeightChart() {
+    const ctx = document.getElementById('weightChart').getContext('2d');
+    if (window.chart) window.chart.destroy();
+    window.chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: state.weights.map(w => w.d),
+            datasets: [{
+                label: 'Weight (kg)',
+                data: state.weights.map(w => w.v),
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                fill: true,
+                tension: 0.4 // This smooths the line
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { display: false }, // Hides grid and labels
+                y: { display: false }  // Hides grid and labels
+            }
+        }
+    });
+}
         function checkAchievements() { alert("Scanning data..."); render(); }
 
         let selectedDateKey = "";
