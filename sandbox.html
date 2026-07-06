@@ -28,9 +28,7 @@
         <div class="card p-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
-                <button onclick="checkAchievements()" class="text-[10px] uppercase font-bold text-blue-600 hover:text-blue-800 mt-1">Refresh Badges</button>
             </div>
-            <div id="badgeCase" class="flex gap-2"></div>
             <div class="flex bg-gray-100 p-1 rounded-lg border">
                 <a href="established.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all text-gray-500">Live</a>
                 <a href="sandbox.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-emerald-600">Sandbox</a>
@@ -105,7 +103,6 @@
     <script>
         let state = JSON.parse(localStorage.getItem('fitData')) || { 
             weights: [], acts: {}, proteinLogs: {}, goal: 150, 
-            badges: { padelProdigy: 0, weeklyWarrior: 0, gravityDefier: 0, ironPillar: 0, proteinPurist: 0, macroMaster: 0 }
         };
         let currentView = new Date();
         const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500','Swim': 'bg-cyan-500', 'Active day': 'bg-yellow-500' };
@@ -114,29 +111,9 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap(); renderBadges();
+            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap();
         }
-
-        function renderBadges() {
-            const container = document.getElementById('badgeCase');
-            if (!container) return; 
-            const defs = [
-                { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
-                { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
-                { id: 'gravityDefier', label: 'Gravity Defier', icon: '⬇️' },
-                { id: 'ironPillar', label: 'Iron Pillar', icon: '🏛️' },
-                { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
-                { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
-            ];
-            container.innerHTML = defs.map(b => {
-                const count = state.badges[b.id] || 0;
-                return `<div class="pixel-badge ${count > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
-                            <span class="text-xl">${b.icon}</span>
-                            <span class="badge-count">${count}</span>
-                        </div>`;
-            }).join('');
-        }
-
+        
         function renderStreakHeatmap() {
             const container = document.getElementById('streakHeatmap');
             if(!container) return;
@@ -249,7 +226,6 @@
         }
     });
 }
-        function checkAchievements() { alert("Scanning data..."); render(); }
 
         let selectedDateKey = "";
         function openModal(key) {
