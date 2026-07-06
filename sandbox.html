@@ -63,25 +63,27 @@
             </div>
 
             <div class="card p-6 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div class="text-center">
-                        <h1 id="currentProtein" class="text-5xl font-bold text-blue-600">0g</h1>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="number" id="pAdd" placeholder="Add (g)" class="border p-2 rounded-lg w-full">
-                        <button onclick="addProtein()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Add</button>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-bold uppercase">Goal (g):</label>
-                        <div class="flex gap-1">
-                            <input type="number" id="pGoal" onchange="saveGoal()" class="border p-2 w-full rounded-lg" disabled>
-                            <button onclick="toggleGoalEdit()" class="bg-gray-200 px-3 rounded-lg text-xs">Edit</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-8"><canvas id="proteinChart" class="max-h-64"></canvas></div>
+    <h2 class="text-lg font-bold mb-4">Daily Habits</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="md:col-span-2 flex flex-col justify-center">
+            <label class="text-xs font-bold uppercase text-gray-500 mb-2">Protein Intake (g)</label>
+            <div class="flex gap-2">
+                <input type="number" id="pAdd" placeholder="Add (g)" class="border p-2 rounded-lg w-full">
+                <button onclick="logHabit('protein')" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Log</button>
             </div>
+        </div>
+        <div class="flex flex-col justify-center">
+            <label class="text-xs font-bold uppercase text-gray-500 mb-2">Creatine</label>
+            <button onclick="toggleHabit('creatine')" id="btn-creatine" class="p-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50">Toggle</button>
+        </div>
+        <div class="flex flex-col justify-center">
+            <label class="text-xs font-bold uppercase text-gray-500 mb-2">Multivitamin</label>
+            <button onclick="toggleHabit('vitamins')" id="btn-vitamins" class="p-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50">Toggle</button>
+        </div>
+    </div>
+    <div class="mt-8"><canvas id="habitChart" class="max-h-64"></canvas></div>
+</div>
+            
         </div>
     </div>
 
@@ -102,7 +104,7 @@
 
     <script>
         let state = JSON.parse(localStorage.getItem('fitData')) || { 
-            weights: [], acts: {}, proteinLogs: {}, goal: 150, 
+            weights: [], acts: {}, habits: {}, goal: 150, 
         };
         let currentView = new Date();
         const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500','Swim': 'bg-cyan-500', 'Active day': 'bg-yellow-500' };
@@ -129,36 +131,7 @@
                 container.appendChild(pixel);
             }
         }
-
-        function renderProtein() {
-    const current = state.proteinLogs[todayKey] || 0;
-    document.getElementById('currentProtein').innerText = current + "g";
-    document.getElementById('pGoal').value = state.goal;
-    const pCtx = document.getElementById('proteinChart').getContext('2d');
-    if (window.pChart) window.pChart.destroy();
-    window.pChart = new Chart(pCtx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(state.proteinLogs).slice(-7), // Last 7 days
-            datasets: [{
-                label: 'Protein (g)',
-                data: Object.values(state.proteinLogs).slice(-7),
-                backgroundColor: '#3b82f6',
-                borderRadius: 8 // Softens the bar corners
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false } },
-                y: { grid: { display: false }, beginAtZero: true }
-            }
-        }
-    });
-}
-
+        
         function renderCalendar() {
             const grid = document.getElementById('calGrid');
             if (!grid) return;
@@ -186,10 +159,7 @@
                 grid.appendChild(div);
             }
         }
-
-        function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
-        function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
-        function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
+        
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
@@ -241,6 +211,40 @@
             save(); closeModal();
         }
         render();
+
+        const getTodayKey = () => new Date().toISOString().split('T')[0];
+
+function ensureHabitDay(key) {
+    if (!state.habits[key]) {
+        state.habits[key] = { protein: 0, creatine: false, vitamins: false };
+    }
+}
+
+function logHabit(type) {
+    const key = getTodayKey();
+    ensureHabitDay(key);
+    const val = parseInt(document.getElementById('pAdd').value);
+    if (!isNaN(val)) {
+        state.habits[key].protein += val;
+        document.getElementById('pAdd').value = '';
+        save();
+    }
+}
+
+function toggleHabit(type) {
+    const key = getTodayKey();
+    ensureHabitDay(key);
+    state.habits[key][type] = !state.habits[key][type];
+    updateHabitButtons(); // Refresh button visual state
+    save();
+}
+
+function updateHabitButtons() {
+    const key = getTodayKey();
+    ensureHabitDay(key);
+    document.getElementById('btn-creatine').className = `p-2 border rounded-lg text-sm font-bold ${state.habits[key].creatine ? 'bg-green-100 border-green-500 text-green-700' : 'text-gray-600'}`;
+    document.getElementById('btn-vitamins').className = `p-2 border rounded-lg text-sm font-bold ${state.habits[key].vitamins ? 'bg-green-100 border-green-500 text-green-700' : 'text-gray-600'}`;
+}
     </script>
 </body>
 </html>
