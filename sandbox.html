@@ -63,6 +63,27 @@
                     <button onclick="quickLog('Active day')" class="col-span-2 bg-yellow-500 text-white py-2 rounded-lg text-xs font-bold hover:bg-yellow-600">Active day</button>
                 </div>
             </div>
+
+            <div class="card p-6 col-span-1 md:col-span-2">
+                <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div class="text-center">
+                        <h1 id="currentProtein" class="text-5xl font-bold text-blue-600">0g</h1>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="number" id="pAdd" placeholder="Add (g)" class="border p-2 rounded-lg w-full">
+                        <button onclick="addProtein()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Add</button>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-bold uppercase">Goal (g):</label>
+                        <div class="flex gap-1">
+                            <input type="number" id="pGoal" onchange="saveGoal()" class="border p-2 w-full rounded-lg" disabled>
+                            <button onclick="toggleGoalEdit()" class="bg-gray-200 px-3 rounded-lg text-xs">Edit</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8"><canvas id="proteinChart" class="max-h-64"></canvas></div>
+            </div>
         </div>
     </div>
 
@@ -93,7 +114,7 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderWeightChart(); renderCalendar(); renderStreakHeatmap(); renderBadges();
+            renderWeightChart(); renderCalendar(); renderProtein(); renderStreakHeatmap(); renderBadges();
         }
 
         function renderBadges() {
@@ -132,6 +153,15 @@
             }
         }
 
+        function renderProtein() {
+            const current = state.proteinLogs[todayKey] || 0;
+            document.getElementById('currentProtein').innerText = current + "g";
+            document.getElementById('pGoal').value = state.goal;
+            const pCtx = document.getElementById('proteinChart').getContext('2d');
+            if (window.pChart) window.pChart.destroy();
+            window.pChart = new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
+        }
+
         function renderCalendar() {
             const grid = document.getElementById('calGrid');
             if (!grid) return;
@@ -160,6 +190,9 @@
             }
         }
 
+        function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
+        function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
+        function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
