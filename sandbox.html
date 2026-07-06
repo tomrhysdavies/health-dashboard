@@ -4,45 +4,33 @@
     <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Health Dashboard</title>
+    <title>Health Dashboard | Sandbox</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    
         .card { 
             background: white; 
             border: 1px solid rgba(229, 231, 235, 0.5); 
             border-radius: 16px; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
-    
-        .pixel-badge { 
-            width: 44px; height: 44px; 
-            border-radius: 12px; 
-            transition: all 0.2s ease;
-        }
-    
-        /* Subtle hover effects for buttons */
+        .pixel-badge { width: 44px; height: 44px; border-radius: 12px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid #e5e7eb; background: #f9fafb; }
+        .badge-lit { border-color: #3b82f6; opacity: 1; filter: grayscale(0%); }
+        .badge-dim { border-color: #e5e7eb; opacity: 0.4; filter: grayscale(100%); }
+        .badge-count { position: absolute; bottom: -6px; right: -6px; background: #4b5563; color: white; font-size: 9px; padding: 1px 4px; font-weight: bold; border-radius: 4px; }
         button { transition: all 0.2s ease; }
         button:hover { transform: translateY(-1px); }
     </style>
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
-    <body class="bg-gray-100">
-    <div class="max-w-5xl mx-auto space-y-6">
-        </div>
 
-</body>
     <div class="max-w-5xl mx-auto space-y-6">
-        
-        <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="card p-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Health Dashboard</h1>
                 <button onclick="checkAchievements()" class="text-[10px] uppercase font-bold text-blue-600 hover:text-blue-800 mt-1">Refresh Badges</button>
             </div>
-            
             <div id="badgeCase" class="flex gap-2"></div>
-
             <div class="flex bg-gray-100 p-1 rounded-lg border">
                 <a href="established.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all text-gray-500">Live</a>
                 <a href="sandbox.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-emerald-600">Sandbox</a>
@@ -50,7 +38,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border">
+            <div class="card p-6">
                 <h2 class="text-lg font-bold mb-4">Weight Trend</h2>
                 <canvas id="weightChart"></canvas>
                 <div class="mt-4 flex gap-2">
@@ -59,7 +47,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border">
+            <div class="card p-6">
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">&larr;</button>
                     <h2 id="monthLabel" class="font-bold text-lg"></h2>
@@ -68,38 +56,28 @@
                 <div id="streakHeatmap" class="flex gap-2 mb-6 justify-center"></div>
                 <div id="calGrid" class="grid grid-cols-7 gap-1 text-center"></div>
                 <div class="grid grid-cols-2 gap-2 mt-6">
-                    <button onclick="quickLog('Padel')" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-green-600">Padel</button>
-                    <button onclick="quickLog('Gym')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-700">Gym</button>
-                    <button onclick="quickLog('Run')" class="flex-1 bg-orange-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-orange-600">Run</button>
+                    <button onclick="quickLog('Padel')" class="bg-green-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-green-600">Padel</button>
+                    <button onclick="quickLog('Gym')" class="bg-blue-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-700">Gym</button>
+                    <button onclick="quickLog('Run')" class="bg-orange-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-orange-600">Run</button>
                     <button onclick="quickLog('Swim')" class="bg-cyan-500 text-white py-2 rounded-lg text-xs font-bold hover:bg-cyan-600">Swim</button>
+                    <button onclick="quickLog('Active day')" class="col-span-2 bg-yellow-500 text-white py-2 rounded-lg text-xs font-bold hover:bg-yellow-600">Active day</button>
                 </div>
-                <div class="mt-2">
-                    <button onclick="quickLog('Active day')" class="w-full bg-yellow-500 text-white py-2 rounded-lg text-xs font-bold hover:bg-yellow-600">Active day</button>
-                </div>   
-                
             </div>
+        </div>
+    </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4">Daily Protein Intake</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div class="text-center">
-                        <h1 id="currentProtein" class="text-5xl font-bold text-blue-600">0g</h1>
-                        <div id="motivator" class="mt-2 text-green-600 font-bold hidden">🎉 Target Met!</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="number" id="pAdd" placeholder="Add Protein (g)" class="border p-2 rounded-lg w-full">
-                        <button onclick="addProtein()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Add</button>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-bold uppercase">Daily Goal (g):</label>
-                        <div class="flex gap-1">
-                            <input type="number" id="pGoal" onchange="saveGoal()" class="border p-2 w-full rounded-lg" disabled>
-                            <button onclick="toggleGoalEdit()" class="bg-gray-200 px-3 rounded-lg text-xs">Edit</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-8"><canvas id="proteinChart" class="max-h-64"></canvas></div>
+    <div id="activityModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="card p-8 w-full max-w-sm text-center">
+            <h2 id="modalTitle" class="text-xl font-bold mb-6">Log Activity</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="logFromModal('Padel')" class="bg-green-500 text-white py-3 rounded-lg font-bold">Padel</button>
+                <button onclick="logFromModal('Gym')" class="bg-blue-600 text-white py-3 rounded-lg font-bold">Gym</button>
+                <button onclick="logFromModal('Run')" class="bg-orange-500 text-white py-3 rounded-lg font-bold">Run</button>
+                <button onclick="logFromModal('Swim')" class="bg-cyan-500 text-white py-3 rounded-lg font-bold">Swim</button>
+                <button onclick="logFromModal('Active day')" class="col-span-2 bg-yellow-500 text-white py-3 rounded-lg font-bold">Active day</button>
+                <button onclick="logFromModal('Clear')" class="col-span-2 bg-gray-200 text-gray-600 py-2 rounded-lg text-xs font-bold hover:bg-gray-300">Clear Entry</button>
             </div>
+            <button onclick="closeModal()" class="mt-6 text-gray-400 font-bold underline text-sm">Cancel</button>
         </div>
     </div>
 
@@ -115,38 +93,28 @@
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
 
         function render() {
-            renderWeightChart();
-            renderCalendar();
-            renderProtein();
-            renderStreakHeatmap();
-            renderBadges(); // Just adding this call
+            renderWeightChart(); renderCalendar(); renderStreakHeatmap(); renderBadges();
         }
 
-       function renderBadges() {
-    const container = document.getElementById('badgeCase');
-    if (!container) return; 
-    
-    const defs = [
-        { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
-        { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
-        { id: 'gravityDefier', label: 'Gravity Defier', icon: '⬇️' },
-        { id: 'ironPillar', label: 'Iron Pillar', icon: '🏛️' },
-        { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
-        { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
-    ];
-    
-    container.innerHTML = defs.map(b => {
-        const count = state.badges[b.id] || 0;
-        return `
-            <div class="pixel-badge ${count > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
-                <span class="text-xl">${b.icon}</span>
-                <span class="badge-count">${count}</span>
-            </div>
-        `;
-    }).join('');
-}
-
-        function checkAchievements() { alert("Scanning data..."); render(); }
+        function renderBadges() {
+            const container = document.getElementById('badgeCase');
+            if (!container) return; 
+            const defs = [
+                { id: 'padelProdigy', label: 'Padel Prodigy', icon: '🎾' },
+                { id: 'weeklyWarrior', label: 'Weekly Warrior', icon: '🔥' },
+                { id: 'gravityDefier', label: 'Gravity Defier', icon: '⬇️' },
+                { id: 'ironPillar', label: 'Iron Pillar', icon: '🏛️' },
+                { id: 'proteinPurist', label: 'Protein Purist', icon: '🥤' },
+                { id: 'macroMaster', label: 'Macro Master', icon: '🏆' }
+            ];
+            container.innerHTML = defs.map(b => {
+                const count = state.badges[b.id] || 0;
+                return `<div class="pixel-badge ${count > 0 ? 'badge-lit' : 'badge-dim'}" title="${b.label}">
+                            <span class="text-xl">${b.icon}</span>
+                            <span class="badge-count">${count}</span>
+                        </div>`;
+            }).join('');
+        }
 
         function renderStreakHeatmap() {
             const container = document.getElementById('streakHeatmap');
@@ -164,75 +132,54 @@
             }
         }
 
-        function renderProtein() {
-            const current = state.proteinLogs[todayKey] || 0;
-            document.getElementById('currentProtein').innerText = current + "g";
-            document.getElementById('pGoal').value = state.goal;
-            const pCtx = document.getElementById('proteinChart').getContext('2d');
-            if (window.pChart) window.pChart.destroy();
-            window.pChart = new Chart(pCtx, { type: 'bar', data: { labels: Object.keys(state.proteinLogs).slice(-30), datasets: [{ label: 'Protein (g)', data: Object.values(state.proteinLogs).slice(-30), backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
+        function renderCalendar() {
+            const grid = document.getElementById('calGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            days.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'text-xs font-bold text-gray-400 pb-2';
+                header.innerText = day;
+                grid.appendChild(header);
+            });
+            const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
+            document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
+            const firstDay = new Date(y, m, 1).getDay();
+            const offset = (firstDay === 0) ? 6 : firstDay - 1;
+            for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
+            for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+                const key = `${y}-${m}-${i}`;
+                const activity = state.acts[key];
+                const color = activityColors[activity] || 'bg-gray-50';
+                const div = document.createElement('div');
+                div.className = `p-2 text-sm border rounded-lg cursor-pointer transition-colors ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
+                div.innerText = i;
+                div.onclick = () => openModal(key);
+                grid.appendChild(div);
+            }
         }
 
-        function toggleGoalEdit() { document.getElementById('pGoal').disabled = !document.getElementById('pGoal').disabled; }
-        function addProtein() { const val = parseInt(document.getElementById('pAdd').value); if(!isNaN(val)) { state.proteinLogs[todayKey] = (state.proteinLogs[todayKey] || 0) + val; document.getElementById('pAdd').value = ''; save(); } }
-        function saveGoal() { state.goal = document.getElementById('pGoal').value; document.getElementById('pGoal').disabled = true; save(); }
-        function renderCalendar() {
-    const grid = document.getElementById('calGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    
-    // 1. Add the Day-of-the-Week Headers
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    days.forEach(day => {
-        const header = document.createElement('div');
-        header.className = 'text-xs font-bold text-gray-400 pb-2';
-        header.innerText = day;
-        grid.appendChild(header);
-    });
-
-    const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
-    document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-    // 2. Add empty cells for days before the 1st of the month
-    const firstDay = new Date(y, m, 1).getDay();
-    const offset = (firstDay === 0) ? 6 : firstDay - 1; // Adjust for Monday start
-    for (let i = 0; i < offset; i++) {
-        grid.appendChild(document.createElement('div'));
-    }
-
-    // 3. Render the days
-    for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
-        const key = `${y}-${m}-${i}`;
-        const activity = state.acts[key];
-        const color = activityColors[activity] || 'bg-gray-50';
-
-        const div = document.createElement('div');
-        div.className = `p-2 text-sm border rounded-lg cursor-pointer transition-colors ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
-        div.innerText = i;
-        div.onclick = () => {
-            const choice = prompt("Log Activity for " + i + "/" + (m + 1) + "\nType: Padel, Gym, Run, Swim, Active day, or 'Clear':", activity || "");
-            if (choice === null) return;
-            const formattedChoice = choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
-            if (formattedChoice === 'Clear') {
-                delete state.acts[key];
-            } else if (activityColors[formattedChoice]) {
-                state.acts[key] = formattedChoice;
-            }
-            save();
-        };
-        grid.appendChild(div); 
-    }
-}
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function quickLog(t) { const k = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate(); state.acts[k] = t; save(); }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
-        let chart;
-        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(chart) chart.destroy(); chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } }); }
-        function exportData() { const b = new Blob([JSON.stringify(state)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
-        function importData(e) { const r = new FileReader(); r.onload = (event) => { state = JSON.parse(event.target.result); save(); }; r.readAsText(e.target.files[0]); }
+        function renderWeightChart() { const ctx = document.getElementById('weightChart').getContext('2d'); if(window.chart) window.chart.destroy(); window.chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Kg', data: state.weights.map(w => w.v), borderColor: '#2563eb' }] } }); }
+        function checkAchievements() { alert("Scanning data..."); render(); }
+
+        let selectedDateKey = "";
+        function openModal(key) {
+            selectedDateKey = key;
+            const parts = key.split('-');
+            document.getElementById('modalTitle').innerText = `Log Activity for ${parts[2]}/${parseInt(parts[1])+1}`;
+            document.getElementById('activityModal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('activityModal').classList.add('hidden'); }
+        function logFromModal(activity) {
+            if(activity === 'Clear') delete state.acts[selectedDateKey];
+            else state.acts[selectedDateKey] = activity;
+            save(); closeModal();
+        }
         render();
     </script>
 </body>
 </html>
-
-  
