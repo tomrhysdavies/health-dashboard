@@ -16,9 +16,14 @@
 </head>
 <body class="p-8">
     <div class="max-w-5xl mx-auto space-y-8">
-        <div class="flex justify-between items-end">
-            <h1 class="text-3xl font-bold text-slate-900">Health Overview</h1>
-            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider" id="dateLabel"></div>
+        <div class="card p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Health Dashboard</h1>
+            </div>
+            <div class="flex bg-slate-100 p-1 rounded-lg border">
+                <a href="established.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all text-slate-500 hover:text-slate-800">Live</a>
+                <a href="sandbox.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-emerald-600">Sandbox</a>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -163,7 +168,6 @@
             window.chart = new Chart(ctx, { type: 'line', data: { labels: state.weights.map(w => w.d), datasets: [{ label: 'Weight', data: state.weights.map(w => w.v), borderColor: '#6366f1', fill: true, tension: 0.4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); 
         }
         
-        // Modal & Utils
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
         function openModal(key) { selectedDateKey = key; const parts = key.split('-'); document.getElementById('modalTitle').innerText = `Log for ${parts[2]}/${parseInt(parts[1])+1}`; document.getElementById('activityModal').classList.remove('hidden'); }
