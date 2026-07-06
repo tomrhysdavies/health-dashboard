@@ -89,16 +89,15 @@
         const activityColors = { 'Padel': 'bg-emerald-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500', 'Swim': 'bg-cyan-500', 'Active day': 'bg-yellow-500' };
         const getTodayKey = () => new Date().toISOString().split('T')[0];
 
-        function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
+        function save() { localStorage.setItem('fitData', JSON.stringify(state)); renderAll(); }
         
-        function render() {
+        function renderAll() {
             renderWeightChart();
             renderCalendar();
             renderStreakHeatmap();
             renderHabitEngine();
         }
 
-        // Habit Engine
         function ensureHabitDay(key) { 
             if (!state.habits) state.habits = {};
             if (!state.habits[key]) state.habits[key] = { protein: 0, creatine: false, vitamins: false }; 
@@ -136,7 +135,6 @@
             });
         }
 
-        // Calendar Logic
         function renderCalendar() { 
             const grid = document.getElementById('calGrid'); if (!grid) return; grid.innerHTML = ''; 
             ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => { const h = document.createElement('div'); h.className = 'text-[10px] font-bold text-slate-400 pb-2 uppercase'; h.innerText = d; grid.appendChild(h); });
@@ -169,14 +167,14 @@
         }
         
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
-        function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); render(); }
+        function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); renderAll(); }
         function openModal(key) { selectedDateKey = key; const parts = key.split('-'); document.getElementById('modalTitle').innerText = `Log for ${parts[2]}/${parseInt(parts[1])+1}`; document.getElementById('activityModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('activityModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('activityModal').classList.remove('hidden'); }
         function logFromModal(a) { if(a === 'Clear') delete state.acts[selectedDateKey]; else state.acts[selectedDateKey] = a; save(); closeModal(); }
         
         let selectedDateKey = "";
         document.getElementById('dateLabel').innerText = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-        render();
+        renderAll();
     </script>
 </body>
 </html>
