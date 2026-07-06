@@ -20,9 +20,12 @@
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Health Dashboard</h1>
             </div>
-            <div class="flex bg-slate-100 p-1 rounded-lg border">
-                <a href="established.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all text-slate-500 hover:text-slate-800">Live</a>
-                <a href="sandbox.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-emerald-600">Sandbox</a>
+            <div class="flex items-center gap-4">
+                <div id="dateLabel" class="text-sm font-semibold text-slate-500 uppercase tracking-wider"></div>
+                <div class="flex bg-slate-100 p-1 rounded-lg border">
+                    <a href="established.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all text-slate-500 hover:text-slate-800">Live</a>
+                    <a href="sandbox.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-emerald-600">Sandbox</a>
+                </div>
             </div>
         </div>
 
@@ -98,6 +101,7 @@
             renderHabitEngine();
         }
 
+        // Habit Engine
         function ensureHabitDay(key) { 
             if (!state.habits) state.habits = {};
             if (!state.habits[key]) state.habits[key] = { protein: 0, creatine: false, vitamins: false }; 
@@ -119,8 +123,10 @@
         function renderHabitEngine() {
             const key = getTodayKey();
             ensureHabitDay(key);
-            document.getElementById('btn-creatine').classList.toggle('habit-active', state.habits[key].creatine);
-            document.getElementById('btn-vitamins').classList.toggle('habit-active', state.habits[key].vitamins);
+            const btnC = document.getElementById('btn-creatine');
+            const btnV = document.getElementById('btn-vitamins');
+            if(btnC) btnC.classList.toggle('habit-active', state.habits[key].creatine);
+            if(btnV) btnV.classList.toggle('habit-active', state.habits[key].vitamins);
             
             const ctx = document.getElementById('habitChart').getContext('2d');
             if (window.hChart) window.hChart.destroy();
@@ -135,6 +141,7 @@
             });
         }
 
+        // Calendar Logic
         function renderCalendar() { 
             const grid = document.getElementById('calGrid'); if (!grid) return; grid.innerHTML = ''; 
             ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => { const h = document.createElement('div'); h.className = 'text-[10px] font-bold text-slate-400 pb-2 uppercase'; h.innerText = d; grid.appendChild(h); });
@@ -173,7 +180,8 @@
         function logFromModal(a) { if(a === 'Clear') delete state.acts[selectedDateKey]; else state.acts[selectedDateKey] = a; save(); closeModal(); }
         
         let selectedDateKey = "";
-        document.getElementById('dateLabel').innerText = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const dateEl = document.getElementById('dateLabel');
+        if(dateEl) dateEl.innerText = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
         renderAll();
     </script>
 </body>
