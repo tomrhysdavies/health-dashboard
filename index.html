@@ -156,34 +156,45 @@
     const grid = document.getElementById('calGrid');
     if (!grid) return;
     grid.innerHTML = '';
+    
+    // 1. Add the Day-of-the-Week Headers
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    days.forEach(day => {
+        const header = document.createElement('div');
+        header.className = 'text-xs font-bold text-gray-400 pb-2';
+        header.innerText = day;
+        grid.appendChild(header);
+    });
+
     const [y, m] = [currentView.getFullYear(), currentView.getMonth()];
     document.getElementById('monthLabel').innerText = currentView.toLocaleString('default', { month: 'long', year: 'numeric' });
 
+    // 2. Add empty cells for days before the 1st of the month
+    const firstDay = new Date(y, m, 1).getDay();
+    const offset = (firstDay === 0) ? 6 : firstDay - 1; // Adjust for Monday start
+    for (let i = 0; i < offset; i++) {
+        grid.appendChild(document.createElement('div'));
+    }
+
+    // 3. Render the days
     for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
         const key = `${y}-${m}-${i}`;
         const activity = state.acts[key];
         const color = activityColors[activity] || 'bg-gray-50';
 
         const div = document.createElement('div');
-        div.className = `p-2 text-sm border rounded-lg cursor-pointer transition-colors ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-200'}`;
+        div.className = `p-2 text-sm border rounded-lg cursor-pointer transition-colors ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
         div.innerText = i;
-
-        // NEW: This click handler triggers the selection prompt
         div.onclick = () => {
-            const choice = prompt("Log Activity for " + i + "/" + (m + 1) + "\nType: Padel, Gym, Run, or 'Clear' to remove:", activity || "");
-            
-            if (choice === null) return; // User clicked Cancel
-
+            const choice = prompt("Log Activity for " + i + "/" + (m + 1) + "\nType: Padel, Gym, Run, or 'Clear':", activity || "");
+            if (choice === null) return;
             const formattedChoice = choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
-
             if (formattedChoice === 'Clear') {
                 delete state.acts[key];
             } else if (activityColors[formattedChoice]) {
                 state.acts[key] = formattedChoice;
-            } else if (formattedChoice !== "") {
-                alert("Invalid activity! Use: Padel, Gym, or Run.");
             }
-            save(); // Updates state and re-renders the whole dashboard
+            save();
         };
         grid.appendChild(div);
     }
