@@ -227,17 +227,24 @@
                 label: 'Weight (kg)',
                 data: state.weights.map(w => w.v),
                 borderColor: '#2563eb',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                backgroundColor: 'rgba(37, 99, 235, 0.05)',
                 fill: true,
-                tension: 0.4 // This smooths the line
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                x: { display: false }, // Hides grid and labels
-                y: { display: false }  // Hides grid and labels
+                x: { 
+                    grid: { display: false },
+                    ticks: { font: { size: 10 } }
+                },
+                y: { 
+                    grid: { color: '#f3f4f6' }, // Subtle light gray grid
+                    ticks: { font: { size: 10 } },
+                    beginAtZero: false // Ensures graph isn't squashed if you're close to your weight
+                }
             }
         }
     });
