@@ -34,10 +34,9 @@
             
             <div id="badgeCase" class="flex gap-2"></div>
 
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Export</button>
-                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
-                <button onclick="document.getElementById('importFile').click()" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Import</button>
+            <div class="flex bg-gray-100 p-1 rounded-lg border">
+                <a href="established.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all text-gray-500">Live</a>
+                <a href="sandbox.html" class="px-4 py-2 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-emerald-600">Sandbox</a>
             </div>
         </div>
 
