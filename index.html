@@ -85,7 +85,7 @@
             badges: { padelProdigy: 0, weeklyWarrior: 0, gravityDefier: 0, ironPillar: 0, proteinPurist: 0, macroMaster: 0 }
         };
         let currentView = new Date();
-        const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500' };
+        const activityColors = { 'Padel': 'bg-green-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500','Swim': 'bg-cyan-500', 'Active day': 'bg-yellow-500' };
         const todayKey = new Date().toISOString().split('T')[0];
 
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); render(); }
@@ -186,7 +186,7 @@
         div.className = `p-2 text-sm border rounded-lg cursor-pointer transition-colors ${activity ? color + ' text-white font-bold' : 'bg-gray-50 hover:bg-gray-100'}`;
         div.innerText = i;
         div.onclick = () => {
-            const choice = prompt("Log Activity for " + i + "/" + (m + 1) + "\nType: Padel, Gym, Run, or 'Clear':", activity || "");
+            const choice = prompt("Log Activity for " + i + "/" + (m + 1) + "\nType: Padel, Gym, Run, Swim, Active day, or 'Clear':", activity || "");
             if (choice === null) return;
             const formattedChoice = choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
             if (formattedChoice === 'Clear') {
