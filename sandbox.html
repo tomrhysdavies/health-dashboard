@@ -91,7 +91,10 @@
         function render() { renderWeightChart(); renderCalendar(); renderStreakHeatmap(); renderHabitEngine(); }
 
         // Habit Engine
-        function ensureHabitDay(key) { if (!state.habits[key]) state.habits[key] = { protein: 0, creatine: false, vitamins: false }; }
+        function ensureHabitDay(key) { 
+            if (!state.habits) state.habits = {};
+            if (!state.habits[key]) state.habits[key] = { protein: 0, creatine: false, vitamins: false }; 
+        }
         function handleHabit(type) {
             const key = getTodayKey();
             ensureHabitDay(key);
@@ -104,13 +107,11 @@
             }
             save();
         }
-
         function renderHabitEngine() {
             const key = getTodayKey();
             ensureHabitDay(key);
             document.getElementById('btn-creatine').className = `p-2 border rounded-lg text-sm font-bold ${state.habits[key].creatine ? 'bg-green-100 border-green-500 text-green-700' : 'text-gray-600'}`;
             document.getElementById('btn-vitamins').className = `p-2 border rounded-lg text-sm font-bold ${state.habits[key].vitamins ? 'bg-green-100 border-green-500 text-green-700' : 'text-gray-600'}`;
-            
             const ctx = document.getElementById('habitChart').getContext('2d');
             if (window.hChart) window.hChart.destroy();
             const keys = Object.keys(state.habits).slice(-14);
