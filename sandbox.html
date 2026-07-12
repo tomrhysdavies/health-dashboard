@@ -39,8 +39,9 @@
                 </div>
             </div>
 
-            <!-- Calendar & Activity -->
+            <!-- Activity Log -->
             <div class="card p-8">
+                <h2 class="text-xl font-bold mb-6 text-slate-800">Activity Log</h2>
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-lg">&larr;</button>
                     <h2 id="monthLabel" class="font-bold text-lg text-slate-800"></h2>
@@ -156,12 +157,10 @@
             const bar = document.getElementById('proteinBar');
             const txt = document.getElementById('proteinText');
             
-            // Pace Calculation: 16 hour active window (7am to 11pm)
             const now = new Date();
             const hoursActive = Math.max(0, Math.min(16, now.getHours() - 7));
             const targetPace = (hoursActive / 16) * GOAL_PROTEIN;
             
-            // Apply Colors
             let barColor = 'bg-indigo-600';
             if (protein >= GOAL_PROTEIN) barColor = 'bg-emerald-500';
             else if (protein < targetPace) barColor = 'bg-amber-500';
