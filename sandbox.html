@@ -11,7 +11,7 @@
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         button { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         button:hover { transform: translateY(-1px); }
-        .habit-active { background-color: #0f172a !important; color: white !important; transform: scale(1.05); }
+        .btn-active { background-color: #e2e8f0; color: #1e293b; }
     </style>
 </head>
 <body class="p-8">
@@ -50,19 +50,20 @@
                 <div id="calGrid" class="grid grid-cols-7 gap-2 text-center"></div>
             </div>
 
-            <!-- Habit Tracker -->
-            <div class="card p-8 col-span-1 md:grid-cols-2">
+            <!-- Protein Habit Tracker with Range Controls -->
+            <div class="card p-8 col-span-1 md:col-span-2">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-slate-800">Daily Habits</h2>
-                    <div class="flex gap-3">
-                        <button onclick="handleHabit('creatine')" id="btn-creatine" class="px-5 py-2 border-2 border-slate-200 rounded-full text-sm font-bold text-slate-600 hover:border-slate-400">Creatine</button>
-                        <button onclick="handleHabit('vitamins')" id="btn-vitamins" class="px-5 py-2 border-2 border-slate-200 rounded-full text-sm font-bold text-slate-600 hover:border-slate-400">Multivitamin</button>
+                    <h2 class="text-xl font-bold text-slate-800">Protein Intake</h2>
+                    <div class="flex bg-slate-100 p-1 rounded-lg">
+                        <button onclick="setRange(7)" id="btn-7" class="px-3 py-1 text-xs font-bold rounded-md btn-active">7D</button>
+                        <button onclick="setRange(30)" id="btn-30" class="px-3 py-1 text-xs font-bold rounded-md">30D</button>
+                        <button onclick="setRange(90)" id="btn-90" class="px-3 py-1 text-xs font-bold rounded-md">90D</button>
                     </div>
                 </div>
                 
                 <div class="mb-8 p-4 bg-slate-50 rounded-2xl">
                     <div class="flex justify-between text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">
-                        <span>Protein Progress</span>
+                        <span>Today's Progress</span>
                         <span id="proteinText">0 / 140g</span>
                     </div>
                     <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
@@ -106,11 +107,19 @@
         let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, habits: {} };
         const GOAL_PROTEIN = 140;
         let currentView = new Date();
+        let chartRange = 7;
         const activityColors = { 'Padel': 'bg-emerald-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500', 'Swim': 'bg-cyan-500', 'Active day': 'bg-yellow-500' };
         const getTodayKey = () => new Date().toISOString().split('T')[0];
 
         function save() { localStorage.setItem('fitData', JSON.stringify(state)); renderAll(); }
         
+        function setRange(days) {
+            chartRange = days;
+            document.querySelectorAll('.flex.bg-slate-100 button').forEach(b => b.classList.remove('btn-active'));
+            document.getElementById(`btn-${days}`).classList.add('btn-active');
+            renderAll();
+        }
+
         function renderAll() {
             renderWeightChart();
             renderCalendar();
@@ -120,19 +129,15 @@
 
         function ensureHabitDay(key) { 
             if (!state.habits) state.habits = {};
-            if (!state.habits[key]) state.habits[key] = { protein: 0, creatine: false, vitamins: false }; 
+            if (!state.habits[key]) state.habits[key] = { protein: 0 }; 
         }
 
         function handleHabit(type) {
             const key = getTodayKey();
             ensureHabitDay(key);
-            if (type === 'protein') {
-                const val = parseInt(document.getElementById('pAdd').value);
-                if (!isNaN(val)) state.habits[key].protein += val;
-                document.getElementById('pAdd').value = '';
-            } else {
-                state.habits[key][type] = !state.habits[key][type];
-            }
+            const val = parseInt(document.getElementById('pAdd').value);
+            if (!isNaN(val)) state.habits[key].protein += val;
+            document.getElementById('pAdd').value = '';
             save();
         }
 
@@ -154,14 +159,10 @@
             if(bar) bar.style.width = percent + '%';
             if(txt) txt.innerText = `${protein} / ${GOAL_PROTEIN}g`;
             
-            const btnC = document.getElementById('btn-creatine');
-            const btnV = document.getElementById('btn-vitamins');
-            if(btnC) btnC.classList.toggle('habit-active', state.habits[key].creatine);
-            if(btnV) btnV.classList.toggle('habit-active', state.habits[key].vitamins);
-            
             const ctx = document.getElementById('habitChart').getContext('2d');
             if (window.hChart) window.hChart.destroy();
-            const keys = Object.keys(state.habits).slice(-14);
+            const allKeys = Object.keys(state.habits).sort();
+            const keys = allKeys.slice(-chartRange);
             window.hChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -206,7 +207,7 @@
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); renderAll(); }
         function openModal(key) { selectedDateKey = key; const parts = key.split('-'); document.getElementById('modalTitle').innerText = `Log for ${parts[2]}/${parseInt(parts[1])+1}`; document.getElementById('activityModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('activityModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('activityModal').classList.remove('hidden'); }
         function logFromModal(a) { if(a === 'Clear') delete state.acts[selectedDateKey]; else state.acts[selectedDateKey] = a; save(); closeModal(); }
         
         window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
