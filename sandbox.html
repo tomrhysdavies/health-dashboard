@@ -50,10 +50,10 @@
                 <div id="calGrid" class="grid grid-cols-7 gap-2 text-center"></div>
             </div>
 
-            <!-- Protein Habit Tracker with Range Controls -->
+            <!-- Protein Habit Tracker -->
             <div class="card p-8 col-span-1 md:col-span-2">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-slate-800">Protein Intake</h2>
+                    <h2 class="text-xl font-bold text-slate-800">Daily Habits</h2>
                     <div class="flex bg-slate-100 p-1 rounded-lg">
                         <button onclick="setRange(7)" id="btn-7" class="px-3 py-1 text-xs font-bold rounded-md btn-active">7D</button>
                         <button onclick="setRange(30)" id="btn-30" class="px-3 py-1 text-xs font-bold rounded-md">30D</button>
@@ -63,7 +63,7 @@
                 
                 <div class="mb-8 p-4 bg-slate-50 rounded-2xl">
                     <div class="flex justify-between text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">
-                        <span>Today's Progress</span>
+                        <span>Protein Progress</span>
                         <span id="proteinText">0 / 140g</span>
                     </div>
                     <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
@@ -99,7 +99,7 @@
                 <button onclick="logFromModal('Active day')" class="col-span-2 bg-yellow-500 text-white py-3 rounded-lg font-bold">Active day</button>
                 <button onclick="logFromModal('Clear')" class="col-span-2 bg-slate-200 text-slate-600 py-2 rounded-lg text-xs font-bold hover:bg-slate-300">Clear Entry</button>
             </div>
-            <button onclick="closeModal()" class="mt-6 text-slate-400 font-bold underline text-sm">Cancel</button>
+            <button onclick="closeModal()" class="mt-6 text-slate-400 font-bold underline text-sm hover:text-slate-600">Cancel</button>
         </div>
     </div>
 
@@ -151,7 +151,6 @@
         function renderHabitEngine() {
             const key = getTodayKey();
             ensureHabitDay(key);
-            
             const protein = state.habits[key].protein;
             const percent = Math.min((protein / GOAL_PROTEIN) * 100, 100);
             const bar = document.getElementById('proteinBar');
@@ -207,7 +206,7 @@
         function saveWeight() { const v = document.getElementById('wVal').value; if(v) { state.weights.push({ d: new Date().toLocaleDateString(), v: v }); save(); } }
         function changeMonth(d) { currentView.setMonth(currentView.getMonth() + d); renderAll(); }
         function openModal(key) { selectedDateKey = key; const parts = key.split('-'); document.getElementById('modalTitle').innerText = `Log for ${parts[2]}/${parseInt(parts[1])+1}`; document.getElementById('activityModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('activityModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('activityModal').classList.add('hidden'); }
         function logFromModal(a) { if(a === 'Clear') delete state.acts[selectedDateKey]; else state.acts[selectedDateKey] = a; save(); closeModal(); }
         
         window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
