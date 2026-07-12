@@ -16,10 +16,9 @@
 </head>
 <body class="p-8">
     <div class="max-w-5xl mx-auto space-y-8">
+        <!-- Header -->
         <div class="card p-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">Health Dashboard</h1>
-            </div>
+            <div><h1 class="text-2xl font-bold text-slate-900">Health Dashboard</h1></div>
             <div class="flex items-center gap-4">
                 <div id="dateLabel" class="text-sm font-semibold text-slate-500 uppercase tracking-wider"></div>
                 <div class="flex bg-slate-100 p-1 rounded-lg border">
@@ -30,6 +29,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Weight Trend -->
             <div class="card p-8">
                 <h2 class="text-xl font-bold mb-4 text-slate-800">Weight Trend</h2>
                 <canvas id="weightChart" class="max-h-64"></canvas>
@@ -39,6 +39,7 @@
                 </div>
             </div>
 
+            <!-- Calendar & Activity -->
             <div class="card p-8">
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-lg">&larr;</button>
@@ -49,28 +50,36 @@
                 <div id="calGrid" class="grid grid-cols-7 gap-2 text-center"></div>
             </div>
 
+            <!-- Habit Tracker with Protein Progress -->
             <div class="card p-8 col-span-1 md:col-span-2">
-                <div class="flex justify-between items-center mb-8">
+                <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-slate-800">Daily Habits</h2>
                     <div class="flex gap-3">
                         <button onclick="handleHabit('creatine')" id="btn-creatine" class="px-5 py-2 border-2 border-slate-200 rounded-full text-sm font-bold text-slate-600 hover:border-slate-400">Creatine</button>
                         <button onclick="handleHabit('vitamins')" id="btn-vitamins" class="px-5 py-2 border-2 border-slate-200 rounded-full text-sm font-bold text-slate-600 hover:border-slate-400">Multivitamin</button>
                     </div>
                 </div>
-                <div class="flex items-center gap-6 mb-8">
-                    <div class="w-full">
-                        <label class="text-[10px] font-bold uppercase text-slate-400 mb-2 block tracking-widest">Protein Intake (g)</label>
-                        <div class="flex gap-4">
-                            <input type="number" id="pAdd" placeholder="Enter grams..." class="bg-slate-50 border-none p-4 rounded-2xl w-full text-lg focus:ring-2 focus:ring-indigo-500">
-                            <button onclick="handleHabit('protein')" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700">Update</button>
-                        </div>
+                
+                <div class="mb-8 p-4 bg-slate-50 rounded-2xl">
+                    <div class="flex justify-between text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">
+                        <span>Protein Progress</span>
+                        <span id="proteinText">0 / 140g</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div id="proteinBar" class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
-                <div class="h-64"><canvas id="habitChart"></canvas></div>
+
+                <div class="flex items-center gap-4">
+                    <input type="number" id="pAdd" placeholder="Add grams..." class="bg-slate-50 border-none p-4 rounded-2xl w-full text-lg focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="handleHabit('protein')" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700">Add</button>
+                </div>
+                <div class="h-48 mt-8"><canvas id="habitChart"></canvas></div>
             </div>
         </div>
     </div>
 
+    <!-- Activity Modal -->
     <div id="activityModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center z-50">
         <div class="card p-8 w-full max-w-sm text-center">
             <h2 id="modalTitle" class="text-xl font-bold mb-6 text-slate-800">Log Activity</h2>
@@ -88,6 +97,7 @@
 
     <script>
         let state = JSON.parse(localStorage.getItem('fitData')) || { weights: [], acts: {}, habits: {} };
+        const GOAL_PROTEIN = 140;
         let currentView = new Date();
         const activityColors = { 'Padel': 'bg-emerald-500', 'Gym': 'bg-blue-600', 'Run': 'bg-orange-500', 'Swim': 'bg-cyan-500', 'Active day': 'bg-yellow-500' };
         const getTodayKey = () => new Date().toISOString().split('T')[0];
@@ -101,7 +111,6 @@
             renderHabitEngine();
         }
 
-        // Habit Engine
         function ensureHabitDay(key) { 
             if (!state.habits) state.habits = {};
             if (!state.habits[key]) state.habits[key] = { protein: 0, creatine: false, vitamins: false }; 
@@ -112,7 +121,7 @@
             ensureHabitDay(key);
             if (type === 'protein') {
                 const val = parseInt(document.getElementById('pAdd').value);
-                if (!isNaN(val)) state.habits[key].protein = val;
+                if (!isNaN(val)) state.habits[key].protein += val;
                 document.getElementById('pAdd').value = '';
             } else {
                 state.habits[key][type] = !state.habits[key][type];
@@ -123,6 +132,14 @@
         function renderHabitEngine() {
             const key = getTodayKey();
             ensureHabitDay(key);
+            
+            const protein = state.habits[key].protein;
+            const percent = Math.min((protein / GOAL_PROTEIN) * 100, 100);
+            const bar = document.getElementById('proteinBar');
+            const txt = document.getElementById('proteinText');
+            if(bar) bar.style.width = percent + '%';
+            if(txt) txt.innerText = `${protein} / ${GOAL_PROTEIN}g`;
+            
             const btnC = document.getElementById('btn-creatine');
             const btnV = document.getElementById('btn-vitamins');
             if(btnC) btnC.classList.toggle('habit-active', state.habits[key].creatine);
@@ -137,11 +154,10 @@
                     labels: keys.map(k => new Date(k).toLocaleDateString('en-US', { weekday: 'short' })),
                     datasets: [{ data: keys.map(k => state.habits[k].protein), backgroundColor: '#6366f1', borderRadius: 12, barThickness: 20 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, max: 200 } } }
             });
         }
 
-        // Calendar Logic
         function renderCalendar() { 
             const grid = document.getElementById('calGrid'); if (!grid) return; grid.innerHTML = ''; 
             ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => { const h = document.createElement('div'); h.className = 'text-[10px] font-bold text-slate-400 pb-2 uppercase'; h.innerText = d; grid.appendChild(h); });
@@ -179,7 +195,6 @@
         function closeModal() { document.getElementById('activityModal').classList.add('hidden'); }
         function logFromModal(a) { if(a === 'Clear') delete state.acts[selectedDateKey]; else state.acts[selectedDateKey] = a; save(); closeModal(); }
         
-        // ESC key listener
         window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
         
         let selectedDateKey = "";
