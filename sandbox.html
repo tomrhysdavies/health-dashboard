@@ -151,11 +151,23 @@
         function renderHabitEngine() {
             const key = getTodayKey();
             ensureHabitDay(key);
+            
             const protein = state.habits[key].protein;
-            const percent = Math.min((protein / GOAL_PROTEIN) * 100, 100);
             const bar = document.getElementById('proteinBar');
             const txt = document.getElementById('proteinText');
-            if(bar) bar.style.width = percent + '%';
+            
+            // Pace Calculation: 16 hour active window (7am to 11pm)
+            const now = new Date();
+            const hoursActive = Math.max(0, Math.min(16, now.getHours() - 7));
+            const targetPace = (hoursActive / 16) * GOAL_PROTEIN;
+            
+            // Apply Colors
+            let barColor = 'bg-indigo-600';
+            if (protein >= GOAL_PROTEIN) barColor = 'bg-emerald-500';
+            else if (protein < targetPace) barColor = 'bg-amber-500';
+            
+            bar.className = `h-3 rounded-full transition-all duration-500 ${barColor}`;
+            bar.style.width = Math.min((protein / GOAL_PROTEIN) * 100, 100) + '%';
             if(txt) txt.innerText = `${protein} / ${GOAL_PROTEIN}g`;
             
             const ctx = document.getElementById('habitChart').getContext('2d');
